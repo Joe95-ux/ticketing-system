@@ -1,6 +1,5 @@
 "use client";
 
-import { Sidebar } from "@/components/sidebar";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 
@@ -9,7 +8,12 @@ export default function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
+  const { status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      redirect("/login");
+    },
+  });
 
   if (status === "loading") {
     return (
@@ -19,18 +23,5 @@ export default function AuthenticatedLayout({
     );
   }
 
-  if (!session) {
-    redirect("/login");
-  }
-
-  return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-background">
-        <div className="container mx-auto py-6">
-          {children}
-        </div>
-      </main>
-    </div>
-  );
+  return children;
 } 
