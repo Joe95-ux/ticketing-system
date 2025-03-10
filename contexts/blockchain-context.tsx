@@ -110,10 +110,11 @@ export function BlockchainProvider({ children }: { children: React.ReactNode }) 
         window.location.reload();
       };
 
-      window.ethereum.on("chainChanged", handleChainChanged);
+      const ethereum = window.ethereum;
+      ethereum.on("chainChanged", handleChainChanged);
 
       return () => {
-        window.ethereum.removeListener("chainChanged", handleChainChanged);
+        ethereum.removeListener("chainChanged", handleChainChanged);
       };
     }
   }, []);
@@ -137,10 +138,11 @@ export function BlockchainProvider({ children }: { children: React.ReactNode }) 
         }
       };
 
-      window.ethereum.on("accountsChanged", handleAccountsChanged);
+      const ethereum = window.ethereum;
+      ethereum.on("accountsChanged", handleAccountsChanged as (...args: unknown[]) => void);
 
       return () => {
-        window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+        ethereum.removeListener("accountsChanged", handleAccountsChanged as (...args: unknown[]) => void);
       };
     }
   }, [address]);
