@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import { BlockchainProvider } from "@/contexts/blockchain-context";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,7 +19,14 @@ export default function RootLayout({
       <body className={inter.className}>
         <SessionProvider>
           <BlockchainProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             {children}
+          </ThemeProvider>
             <Toaster richColors closeButton position="top-right" />
           </BlockchainProvider>
         </SessionProvider>

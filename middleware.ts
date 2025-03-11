@@ -3,30 +3,39 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request });
-  const isAuthenticated = !!token;
+  const path = request.nextUrl.pathname;
 
-  // Public paths that don't require authentication
-  const publicPaths = ["/login", "/signup", "/"];
-  const isPublicPath = publicPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
+  // Define public paths that don't require authentication
+  const isPublicPath = path === "/login" || path === "/register" || path === "/";
 
-  // Redirect authenticated users away from auth pages
-  if (isAuthenticated && isPublicPath) {
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  // Redirect authenticated users away from public paths
+  if (isPublicPath && token) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Redirect unauthenticated users to login page
-  if (!isAuthenticated && !isPublicPath) {
-    const redirectUrl = new URL("/login", request.url);
-    redirectUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
+  // Redirect unauthenticated users to login
+  if (!isPublicPath && !token) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
 }
 
+// Configure which routes to run middleware on
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+  ],
 }; 

@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,15 +16,21 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "sonner";
 
 const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters.",
-  }),
+  password: z
+    .string()
+    .min(8, {
+      message: "Password must be at least 8 characters long.",
+    })
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+      message: "Password must include at least one special character.",
+    }),
 });
 
 export function LoginForm() {
@@ -40,24 +46,33 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const result = await signIn("credentials", {
-      email: values.email,
-      password: values.password,
-      redirect: false,
-    });
+      const result = await signIn("credentials", {
+        email: values.email,
+        password: values.password,
+        redirect: false,
+      });
 
-    setIsLoading(false);
+      if (result?.error) {
+        toast.error(result.error === "CredentialsSignin" 
+          ? "Invalid email or password"
+          : "An error occurred during sign in"
+        );
+        return;
+      }
 
-    if (result?.error) {
-      toast.error("Invalid email or password"
-      );
-      return;
+      // Successful login
+      toast.success("Signed in successfully");
+      router.push("/dashboard");
+      router.refresh();
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
@@ -70,7 +85,11 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="name@example.com" {...field} type="email" />
+                <Input 
+                  placeholder="name@example.com" 
+                  type="email"
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -83,7 +102,10 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your password" {...field} type="password" />
+                <PasswordInput 
+                  placeholder="Enter your password"
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

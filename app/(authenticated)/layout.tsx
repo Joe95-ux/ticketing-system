@@ -2,6 +2,8 @@
 
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import { Sidebar } from "@/components/sidebar";
+import { Navbar } from "@/components/navbar";
 
 export default function AuthenticatedLayout({
   children,
@@ -23,5 +25,15 @@ export default function AuthenticatedLayout({
     );
   }
 
-  return children;
+  return (
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar />
+      <div className="flex flex-1 flex-col">
+        <Navbar />
+        <main className="flex-1 overflow-auto p-4">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
 } 
