@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import db from "@/lib/db";
+import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Activity,
