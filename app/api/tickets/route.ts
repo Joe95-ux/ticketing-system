@@ -1,12 +1,18 @@
+"use client";
+
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { db } from "@/lib/db";
 import * as z from "zod";
 
-const ticketSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().min(1),
+const createTicketSchema = z.object({
+  title: z.string().min(1, {
+    message: "Title is required.",
+  }),
+  description: z.string().min(1, {
+    message: "Description is required.",
+  }),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]),
   category: z.enum(["GENERAL", "TECHNICAL", "BILLING", "FEATURE_REQUEST", "BUG"]),
 });
@@ -24,16 +30,19 @@ export async function POST(req: Request) {
     }
 
     const json = await req.json();
-    const body = ticketSchema.parse(json);
+    const body = createTicketSchema.parse(json);
 
-    const ticket = await db.ticket.create({
-      data: {
-        title: body.title,
-        description: body.description,
-        priority: body.priority,
-        category: body.category,
-        status: "OPEN",
-        userId: session.user.id,
+    // Find similar tickets (case insensitive partial match)
+    const similarTickets = await db.ticket.findMany({
+      where: {
+        title: {
+          contains: body.title,
+          mode: 'insensitive',
+        },
+      },
+      take: 5, // Limit to 5 similar tickets
+      orderBy: {
+        createdAt: 'desc',
       },
       include: {
         createdBy: true,
@@ -41,7 +50,23 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(ticket);
+    // Create the new ticket
+    const ticket = await db.ticket.create({
+      data: {
+        ...body,
+        status: "OPEN",
+        userId: session.user.id,
+      },
+      include: {
+        createdBy: true,
+      },
+    });
+
+    // Return both the created ticket and similar tickets
+    return NextResponse.json({
+      ticket,
+      similarTickets: similarTickets.length > 0 ? similarTickets : null,
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 });

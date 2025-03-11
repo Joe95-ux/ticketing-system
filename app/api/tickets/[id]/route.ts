@@ -12,7 +12,7 @@ const updateSchema = z.object({
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -21,11 +21,12 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { id } = await Promise.resolve(context.params);
     const json = await req.json();
     const body = updateSchema.parse(json);
 
     const ticket = await db.ticket.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { createdBy: true },
     });
 
@@ -44,7 +45,7 @@ export async function PATCH(
     }
 
     const updatedTicket = await db.ticket.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...body,
       },
@@ -69,7 +70,7 @@ export async function PATCH(
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -78,8 +79,9 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { id } = await Promise.resolve(context.params);
     const ticket = await db.ticket.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         createdBy: true,
         assignedTo: true,

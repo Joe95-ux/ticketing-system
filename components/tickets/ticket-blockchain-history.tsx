@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
-import { ethers } from "ethers";
 
 interface BlockchainEvent {
   event: string;
@@ -35,29 +34,39 @@ export function TicketBlockchainHistory({ ticketId }: TicketBlockchainHistoryPro
       if (!contract) return;
 
       try {
-        // Fetch both creation and update events
-        const filter = contract.filters.TicketCreated(ticketId);
-        const creationEvents = await contract.queryFilter(filter);
-        
-        const updateFilter = contract.filters.TicketUpdated(ticketId);
-        const updateEvents = await contract.queryFilter(updateFilter);
+        // Fetch all events and filter manually
+        const creationFilter = contract.filters.TicketCreated();
+        const updateFilter = contract.filters.TicketUpdated();
 
-        // Combine and sort events by timestamp
-        const allEvents = [
-          ...creationEvents.map((event: ethers.Event) => ({
+        const [creationEvents, updateEvents] = await Promise.all([
+          contract.queryFilter(creationFilter),
+          contract.queryFilter(updateFilter)
+        ]);
+
+        // Filter and map creation events
+        const filteredCreationEvents = creationEvents
+          .filter(event => event.args?.ticketId === ticketId)
+          .map(event => ({
             event: "TicketCreated",
             status: event.args?.status,
             creator: event.args?.creator,
             timestamp: Number(event.args?.timestamp),
             transactionHash: event.transactionHash,
-          })),
-          ...updateEvents.map((event: ethers.Event) => ({
+          }));
+
+        // Filter and map update events
+        const filteredUpdateEvents = updateEvents
+          .filter(event => event.args?.ticketId === ticketId)
+          .map(event => ({
             event: "TicketUpdated",
             status: event.args?.status,
             timestamp: Number(event.args?.timestamp),
             transactionHash: event.transactionHash,
-          })),
-        ].sort((a, b) => b.timestamp - a.timestamp);
+          }));
+
+        // Combine and sort all events
+        const allEvents = [...filteredCreationEvents, ...filteredUpdateEvents]
+          .sort((a, b) => b.timestamp - a.timestamp);
 
         setEvents(allEvents);
       } catch (error) {

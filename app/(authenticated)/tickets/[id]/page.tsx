@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { db } from "@/lib/db";
 import { TicketActions } from "@/components/tickets/ticket-actions";
 import { TicketComments } from "@/components/tickets/ticket-comments";
@@ -32,20 +34,13 @@ interface TicketPageProps {
   };
 }
 
-export async function generateMetadata({
-  params,
-}: TicketPageProps): Promise<Metadata> {
-  const ticket = await db.ticket.findUnique({
-    where: { id: params.id },
-  });
-
-  return {
-    title: ticket ? `${ticket.title} | Ticketing System` : "Ticket Not Found",
-    description: ticket?.description,
-  };
-}
-
 async function getTicket(id: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    return null;
+  }
+
   const ticket = await db.ticket.findUnique({
     where: { id },
     include: {
@@ -62,15 +57,38 @@ async function getTicket(id: string) {
     },
   });
 
-  if (!ticket) {
-    notFound();
-  }
-
   return ticket;
 }
 
+export async function generateMetadata({
+  params,
+}: TicketPageProps): Promise<Metadata> {
+  // Await the params resolution
+  const resolvedParams = await Promise.resolve(params);
+  const ticket = await db.ticket.findUnique({
+    where: { id: resolvedParams.id },
+  });
+
+  if (!ticket) {
+    return {
+      title: "Ticket Not Found",
+    };
+  }
+
+  return {
+    title: `Ticket - ${ticket.title}`,
+    description: ticket.description,
+  };
+}
+
 export default async function TicketPage({ params }: TicketPageProps) {
-  const ticket = await getTicket(params.id);
+  // Await the params resolution
+  const resolvedParams = await Promise.resolve(params);
+  const ticket = await getTicket(resolvedParams.id);
+
+  if (!ticket) {
+    notFound();
+  }
 
   return (
     <div className="space-y-6">

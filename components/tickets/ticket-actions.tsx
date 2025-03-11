@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Ticket } from "@/types";
+import { Ticket, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -42,6 +42,20 @@ export function TicketActions({ ticket }: TicketActionsProps) {
   const { isConnected, connect, updateTicketStatus } = useBlockchain();
   const [isLoading, setIsLoading] = React.useState(false);
   const [showAssignDialog, setShowAssignDialog] = React.useState(false);
+  const [supportUsers, setSupportUsers] = React.useState<User[]>([]);
+
+  // Fetch support users when dialog opens
+  React.useEffect(() => {
+    if (showAssignDialog) {
+      fetch("/api/users/support")
+        .then((res) => res.json())
+        .then((data) => setSupportUsers(data))
+        .catch((error) => {
+          console.error("Failed to fetch support users:", error);
+          toast.error("Failed to load support users");
+        });
+    }
+  }, [showAssignDialog]);
 
   const canManageTicket =
     session?.user.role === "ADMIN" ||
@@ -53,9 +67,7 @@ export function TicketActions({ ticket }: TicketActionsProps) {
       try {
         await connect();
       } catch (error) {
-        toast.error("Error", {
-          description: "Please connect your wallet to update the ticket.",
-        });
+        toast.error("Please connect your wallet to update the ticket.");
         return;
       }
     }
@@ -65,6 +77,9 @@ export function TicketActions({ ticket }: TicketActionsProps) {
     try {
       // Update status on blockchain first
       const txHash = await updateTicketStatus(ticket.id, status);
+      if (!txHash) {
+        throw new Error("Blockchain update failed");
+      }
 
       // Then update in database
       const response = await fetch(`/api/tickets/${ticket.id}`, {
@@ -75,25 +90,28 @@ export function TicketActions({ ticket }: TicketActionsProps) {
         body: JSON.stringify({ status, txHash }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to update ticket");
+        throw new Error(data.error || "Failed to update ticket");
       }
 
-      toast.success("Success", {
-        description: "Ticket status has been updated.",
-      });
-
+      toast.success("Ticket status has been updated.");
       router.refresh();
     } catch (error) {
-      toast.error("Error", {
-        description: "Something went wrong. Please try again.",
-      });
+      console.error("Status update error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to update ticket status");
     } finally {
       setIsLoading(false);
     }
   };
 
   const assignTicket = async (userId: string) => {
+    if (!userId) {
+      toast.error("Please select a user to assign the ticket to.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -105,20 +123,18 @@ export function TicketActions({ ticket }: TicketActionsProps) {
         body: JSON.stringify({ userId }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to assign ticket");
+        throw new Error(data.error || "Failed to assign ticket");
       }
 
-      toast.success("Success", {
-        description: "Ticket has been assigned.",
-      });
-
+      toast.success("Ticket has been assigned successfully.");
       setShowAssignDialog(false);
       router.refresh();
     } catch (error) {
-      toast.error("Error", {
-        description: "Something went wrong. Please try again.",
-      });
+      console.error("Assignment error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to assign ticket");
     } finally {
       setIsLoading(false);
     }
@@ -131,14 +147,23 @@ export function TicketActions({ ticket }: TicketActionsProps) {
   return (
     <div className="flex items-center gap-2">
       {!isConnected && (
-        <Button variant="outline" size="sm" onClick={() => connect()}>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => connect()}
+          disabled={isLoading}
+        >
           <Wallet className="mr-2 h-4 w-4" />
           Connect Wallet
         </Button>
       )}
       <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            disabled={isLoading}
+          >
             <UserPlus className="mr-2 h-4 w-4" />
             Assign
           </Button>
@@ -155,16 +180,27 @@ export function TicketActions({ ticket }: TicketActionsProps) {
               <SelectValue placeholder="Select an agent" />
             </SelectTrigger>
             <SelectContent>
-              {/* We'll implement this later when we have the users list */}
-              <SelectItem value="agent1">Agent 1</SelectItem>
-              <SelectItem value="agent2">Agent 2</SelectItem>
+              {supportUsers.map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  {user.name}
+                </SelectItem>
+              ))}
+              {supportUsers.length === 0 && (
+                <SelectItem value="" disabled>
+                  No support agents available
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
         </DialogContent>
       </Dialog>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            disabled={isLoading}
+          >
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
