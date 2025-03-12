@@ -39,7 +39,7 @@ interface TicketActionsProps {
 export function TicketActions({ ticket }: TicketActionsProps) {
   const router = useRouter();
   const { data: session } = useSession();
-  const { isConnected, connect, updateTicketStatus } = useBlockchain();
+  const { isConnected, connect, createTicket, updateTicketStatus } = useBlockchain();
   const [isLoading, setIsLoading] = React.useState(false);
   const [showAssignDialog, setShowAssignDialog] = React.useState(false);
   const [supportUsers, setSupportUsers] = React.useState<User[]>([]);
@@ -60,25 +60,57 @@ export function TicketActions({ ticket }: TicketActionsProps) {
   const canManageTicket =
     session?.user.role === "ADMIN" ||
     session?.user.role === "SUPPORT" ||
-    session?.user.id === ticket.userId;
+    session?.user.id === ticket.userId ||
+    session?.user.id === ticket.assignedId;
 
   const handleStatusUpdate = async (status: string) => {
-    if (!isConnected) {
-      try {
-        await connect();
-      } catch (error) {
-        toast.error("Please connect your wallet to update the ticket.");
-        return;
-      }
-    }
-
     setIsLoading(true);
 
     try {
-      // Update status on blockchain first
-      const txHash = await updateTicketStatus(ticket.id, status);
+      // Ensure wallet is connected first
+      if (!isConnected) {
+        await connect();
+        // After connecting, wait a brief moment for the connection to stabilize
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      // Double-check connection after potential connect
+      if (!isConnected) {
+        throw new Error("Failed to connect to blockchain. Please try again.");
+      }
+
+      // Try to update status on blockchain
+      let txHash;
+      try {
+        txHash = await updateTicketStatus(ticket.id, status);
+      } catch (error: Error | unknown) {
+        // Check if the error is because the ticket doesn't exist
+        if (error instanceof Error && error.message.includes("Ticket does not exist")) {
+          // Create the ticket first
+          try {
+            console.log("Creating ticket on blockchain first...");
+            const createTxHash = await createTicket(ticket.id);
+            if (!createTxHash) {
+              throw new Error("Failed to create ticket on blockchain");
+            }
+            
+            // Wait for the transaction to be mined
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            
+            // Now try to update the status again
+            txHash = await updateTicketStatus(ticket.id, status);
+          } catch (createError) {
+            console.error("Failed to create ticket on blockchain:", createError);
+            throw new Error("Failed to initialize ticket on blockchain");
+          }
+        } else {
+          // If it's a different error, rethrow it
+          throw error;
+        }
+      }
+
       if (!txHash) {
-        throw new Error("Blockchain update failed");
+        throw new Error("Blockchain update failed - no transaction hash received");
       }
 
       // Then update in database
@@ -93,10 +125,10 @@ export function TicketActions({ ticket }: TicketActionsProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to update ticket");
+        throw new Error(data.error || "Failed to update ticket in database");
       }
 
-      toast.success("Ticket status has been updated.");
+      toast.success("Ticket status has been updated successfully.");
       router.refresh();
     } catch (error) {
       console.error("Status update error:", error);
@@ -175,23 +207,24 @@ export function TicketActions({ ticket }: TicketActionsProps) {
               Select a support agent to assign this ticket to.
             </DialogDescription>
           </DialogHeader>
-          <Select onValueChange={(value) => assignTicket(value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select an agent" />
-            </SelectTrigger>
-            <SelectContent>
-              {supportUsers.map((user) => (
-                <SelectItem key={user.id} value={user.id}>
-                  {user.name}
-                </SelectItem>
-              ))}
-              {supportUsers.length === 0 && (
-                <SelectItem value="" disabled>
-                  No support agents available
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
+          {supportUsers.length > 0 ? (
+            <Select onValueChange={(value) => assignTicket(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select an agent" />
+              </SelectTrigger>
+              <SelectContent>
+                {supportUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-2">
+              No support agents available
+            </p>
+          )}
         </DialogContent>
       </Dialog>
       <DropdownMenu>

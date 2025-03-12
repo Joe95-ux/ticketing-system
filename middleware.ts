@@ -7,6 +7,7 @@ export async function middleware(request: NextRequest) {
 
   // Define public paths that don't require authentication
   const isPublicPath = path === "/login" || path === "/register" || path === "/";
+  const isAdminPath = path.startsWith("/admin");
 
   const token = await getToken({
     req: request,
@@ -21,6 +22,11 @@ export async function middleware(request: NextRequest) {
   // Redirect unauthenticated users to login
   if (!isPublicPath && !token) {
     return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Protect admin routes
+  if (isAdminPath && token?.role !== "ADMIN") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();

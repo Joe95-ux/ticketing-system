@@ -10,7 +10,7 @@ const commentSchema = z.object({
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -21,20 +21,21 @@ export async function POST(
 
     const json = await req.json();
     const body = commentSchema.parse(json);
+    const id = await Promise.resolve(context.params.id);
 
     const ticket = await db.ticket.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!ticket) {
-      return new NextResponse("Not Found", { status: 404 });
+      return new NextResponse("Ticket not found", { status: 404 });
     }
 
     const comment = await db.comment.create({
       data: {
         content: body.content,
         userId: session.user.id,
-        ticketId: params.id,
+        ticketId: id,
       },
       include: {
         user: true,
@@ -56,7 +57,7 @@ export async function POST(
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -65,8 +66,10 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const id = await Promise.resolve(context.params.id);
+
     const comments = await db.comment.findMany({
-      where: { ticketId: params.id },
+      where: { ticketId: id },
       include: {
         user: true,
       },
