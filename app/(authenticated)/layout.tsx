@@ -26,12 +26,14 @@ export default function AuthenticatedLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       <Sidebar />
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col overflow-auto">
         <Navbar />
-        <main className="flex-1 overflow-auto p-4">
-          {children}
+        <main className="flex-1 p-6">
+          <div className="mx-auto max-w-5xl">
+            {children}
+          </div>
         </main>
       </div>
     </div>

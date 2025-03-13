@@ -26,6 +26,8 @@ model User {
   tickets       Ticket[]  @relation("CreatedTickets")
   assigned      Ticket[]  @relation("AssignedTickets")
   comments      Comment[]
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
 }
 
 model Ticket {
@@ -58,6 +60,16 @@ model Comment {
   userId    String   @db.ObjectId
   ticket    Ticket   @relation(fields: [ticketId], references: [id])
   ticketId  String   @db.ObjectId
+}
+
+model Message {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  content     String
+  createdAt   DateTime @default(now())
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  senderId    String   @db.ObjectId
+  recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  recipientId String   @db.ObjectId
 }
 
 enum Role {

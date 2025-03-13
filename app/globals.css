@@ -102,11 +102,11 @@
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
+  --background: oklch(0.15 0.02 260);  /* Approximation of GitHub's #0D1117 */
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.141 0.005 285.823);
+  --card: oklch(0.15 0.02 260);  /* Matching background */
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.141 0.005 285.823);
+  --popover: oklch(0.15 0.02 260);  /* Matching background */
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.488 0.243 264.376);
   --primary-foreground: oklch(0.985 0 0);
@@ -140,10 +140,49 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
   }
+
+  html {
+    @apply bg-background;
+  }
+
   html.dark {
     color-scheme: dark;
+    @apply bg-background;
+  }
+
+  html.dark body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Ensure all main content areas respect the theme */
+  main, 
+  section, 
+  div[role="main"],
+  .content-area {
+    @apply bg-background text-foreground;
+  }
+
+  /* Ensure navbar follows theme */
+  nav,
+  header,
+  [role="navigation"],
+  .navbar {
+    @apply bg-background border-border;
+  }
+
+  /* Higher specificity for dark mode */
+  html.dark nav,
+  html.dark header,
+  html.dark [role="navigation"],
+  html.dark .navbar,
+  .dark nav,
+  .dark header,
+  .dark [role="navigation"],
+  .dark .navbar {
+    @apply bg-background border-border;
   }
 }
