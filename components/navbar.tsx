@@ -9,23 +9,40 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Ticket, User, LogOut } from "lucide-react";
+import { Ticket, User, LogOut, Menu } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 
-export function Navbar() {
+interface NavbarProps {
+  onMobileMenuClick: () => void;
+}
+
+export function Navbar({ onMobileMenuClick }: NavbarProps) {
   const { data: session } = useSession();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center justify-between px-4">
-        {/* Logo */}
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2 font-bold hover:opacity-75"
-        >
-          <Ticket className="h-5 w-5" />
-          <span>TicketFlow</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={onMobileMenuClick}
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+
+          {/* Logo */}
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 font-bold hover:opacity-75"
+          >
+            <Ticket className="h-5 w-5" />
+            <span>TicketFlow</span>
+          </Link>
+        </div>
 
         {/* Right side buttons */}
         <div className="flex items-center gap-2">

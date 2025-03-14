@@ -1,7 +1,7 @@
 import { NextAuthOptions } from "next-auth"
 import { db } from "@/lib/db"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { compare } from "bcrypt"
+import { compare } from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
   pages: {
@@ -40,7 +40,8 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.image
+          image: user.image,
+          role: user.role
         }
       }
     })
@@ -57,12 +58,12 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id
-        session.user.email = token.email
-        session.user.name = token.name
-        session.user.image = token.picture
+        session.user.id = token.id as string;
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
+        session.user.image = token.picture as string | null;
       }
-      return session
+      return session;
     },
   },
 } 

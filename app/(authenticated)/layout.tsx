@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import { useState } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { Navbar } from "@/components/navbar";
 
@@ -17,6 +18,8 @@ export default function AuthenticatedLayout({
     },
   });
 
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
   if (status === "loading") {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -27,10 +30,15 @@ export default function AuthenticatedLayout({
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-auto">
-        <Navbar />
-        <main className="flex-1 p-6">
+      <Sidebar 
+        mobileOpen={isMobileOpen}
+        onMobileOpenChange={setIsMobileOpen}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        <Navbar onMobileMenuClick={() => setIsMobileOpen(!isMobileOpen)} />
+        <main className="flex-1 overflow-auto p-6">
           <div className="mx-auto max-w-5xl">
             {children}
           </div>
