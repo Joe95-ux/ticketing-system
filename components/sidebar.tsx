@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Ticket,
-  MessageSquare,
   Settings,
   LogOut,
   ChevronLeft,
@@ -34,11 +33,6 @@ const routes = [
     label: "Tickets",
     icon: Ticket,
     href: "/tickets",
-  },
-  {
-    label: "Messages",
-    icon: MessageSquare,
-    href: "/messages",
   },
   {
     label: "Settings",

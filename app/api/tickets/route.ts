@@ -2,9 +2,10 @@
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import * as z from "zod";
+import { sendTicketEmail } from "@/lib/email";
 
 const createTicketSchema = z.object({
   title: z.string().min(1, {
@@ -62,6 +63,31 @@ export async function POST(req: Request) {
       },
     });
 
+    // Send email to admins
+    const admins = await db.user.findMany({
+      where: { role: "ADMIN" },
+    });
+
+    // Send notification to each admin
+    await Promise.all(
+      admins.map((admin) =>
+        sendTicketEmail("ticket-created", {
+          ticketId: ticket.id,
+          ticketTitle: ticket.title,
+          recipientEmail: admin.email!,
+          recipientName: admin.name,
+        })
+      )
+    );
+
+    // Send confirmation to ticket creator
+    await sendTicketEmail("ticket-created", {
+      ticketId: ticket.id,
+      ticketTitle: ticket.title,
+      recipientEmail: session.user.email!,
+      recipientName: session.user.name,
+    });
+
     // Return both the created ticket and similar tickets
     return NextResponse.json({
       ticket,
@@ -71,11 +97,8 @@ export async function POST(req: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 });
     }
-
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    console.error("Error creating ticket:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 

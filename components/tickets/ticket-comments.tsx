@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSession } from "next-auth/react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -16,18 +19,23 @@ interface Comment {
     id: string;
     name: string | null;
     image: string | null;
+    role?: string;
   };
 }
 
 interface TicketCommentsProps {
   ticketId: string;
   initialComments: Comment[];
+  status: string;
 }
 
-export function TicketComments({ ticketId, initialComments }: TicketCommentsProps) {
+export function TicketComments({ ticketId, initialComments, status }: TicketCommentsProps) {
+  const { data: session } = useSession();
   const [comments, setComments] = React.useState<Comment[]>(initialComments);
   const [newComment, setNewComment] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
+
+  const isResolved = status === "RESOLVED" || status === "CLOSED";
 
   const addComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +53,8 @@ export function TicketComments({ ticketId, initialComments }: TicketCommentsProp
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add comment");
+        const error = await response.text();
+        throw new Error(error || "Failed to add comment");
       }
 
       const comment = await response.json();
@@ -56,7 +65,7 @@ export function TicketComments({ ticketId, initialComments }: TicketCommentsProp
       });
     } catch (error) {
       toast.error("Error", {
-        description: "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -69,17 +78,26 @@ export function TicketComments({ ticketId, initialComments }: TicketCommentsProp
         <CardTitle>Comments</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <form onSubmit={addComment} className="space-y-4">
-          <Textarea
-            placeholder="Add a comment..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            disabled={isLoading}
-          />
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Adding..." : "Add Comment"}
-          </Button>
-        </form>
+        {isResolved ? (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              This ticket has been marked as {status.toLowerCase()}. No new comments can be added.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <form onSubmit={addComment} className="space-y-4">
+            <Textarea
+              placeholder="Add a comment..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              disabled={isLoading}
+            />
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Adding..." : "Add Comment"}
+            </Button>
+          </form>
+        )}
         <div className="space-y-4">
           {comments.map((comment) => (
             <div key={comment.id} className="flex gap-4">
@@ -92,6 +110,11 @@ export function TicketComments({ ticketId, initialComments }: TicketCommentsProp
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{comment.user.name}</span>
+                  {comment.user.role && (
+                    <span className="text-xs bg-secondary px-2 py-0.5 rounded-full">
+                      {comment.user.role.toLowerCase()}
+                    </span>
+                  )}
                   <span className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(comment.createdAt), {
                       addSuffix: true,
@@ -102,6 +125,11 @@ export function TicketComments({ ticketId, initialComments }: TicketCommentsProp
               </div>
             </div>
           ))}
+          {comments.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No comments yet. Be the first to comment!
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
