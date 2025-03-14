@@ -43,19 +43,31 @@ export function TicketActions({ ticket }: TicketActionsProps) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [showAssignDialog, setShowAssignDialog] = React.useState(false);
   const [supportUsers, setSupportUsers] = React.useState<User[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = React.useState(false);
 
   // Fetch support users when dialog opens
+  const fetchSupportUsers = React.useCallback(async () => {
+    setIsLoadingUsers(true);
+    try {
+      const res = await fetch("/api/users/support");
+      if (!res.ok) {
+        throw new Error("Failed to fetch support users");
+      }
+      const data = await res.json();
+      setSupportUsers(data);
+    } catch (error) {
+      console.error("Failed to fetch support users:", error);
+      toast.error("Failed to load support users. Please try again.");
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  }, []);
+
   React.useEffect(() => {
     if (showAssignDialog) {
-      fetch("/api/users/support")
-        .then((res) => res.json())
-        .then((data) => setSupportUsers(data))
-        .catch((error) => {
-          console.error("Failed to fetch support users:", error);
-          toast.error("Failed to load support users");
-        });
+      fetchSupportUsers();
     }
-  }, [showAssignDialog]);
+  }, [showAssignDialog, fetchSupportUsers]);
 
   const canManageTicket =
     session?.user.role === "ADMIN" ||
@@ -127,6 +139,9 @@ export function TicketActions({ ticket }: TicketActionsProps) {
       if (!response.ok) {
         throw new Error(data.error || "Failed to update ticket in database");
       }
+
+      // Force revalidation of the tickets page
+      await fetch(`/api/revalidate?path=/tickets/${ticket.id}`);
 
       toast.success("Ticket status has been updated successfully.");
       router.refresh();
@@ -207,7 +222,11 @@ export function TicketActions({ ticket }: TicketActionsProps) {
               Select a support agent to assign this ticket to.
             </DialogDescription>
           </DialogHeader>
-          {supportUsers.length > 0 ? (
+          {isLoadingUsers ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900" />
+            </div>
+          ) : supportUsers.length > 0 ? (
             <Select onValueChange={(value) => assignTicket(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select an agent" />
@@ -215,15 +234,25 @@ export function TicketActions({ ticket }: TicketActionsProps) {
               <SelectContent>
                 {supportUsers.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {user.name}
+                    {user.name || user.email}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-2">
-              No support agents available
-            </p>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center py-2">
+                No support agents available
+              </p>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={fetchSupportUsers}
+                disabled={isLoadingUsers}
+              >
+                Retry
+              </Button>
+            </div>
           )}
         </DialogContent>
       </Dialog>

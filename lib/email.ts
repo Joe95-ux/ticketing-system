@@ -71,7 +71,7 @@ export async function sendTicketEmail(
     const { subject, html } = templates[template](props);
     
     await resend.emails.send({
-      from: 'Ticketing System <notifications@yourdomain.com>',
+      from: 'ogorktabi@gmail.com',
       to: props.recipientEmail,
       subject,
       html

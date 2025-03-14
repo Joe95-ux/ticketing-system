@@ -5,7 +5,6 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { TicketActions } from "@/components/tickets/ticket-actions";
 import { TicketComments } from "@/components/tickets/ticket-comments";
-import { TicketMessages } from "@/components/tickets/ticket-messages";
 import { TicketBlockchainHistory } from "@/components/tickets/ticket-blockchain-history";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -83,7 +82,9 @@ export async function generateMetadata({
 }
 
 export default async function TicketPage({ params }: TicketPageProps) {
-  const ticket = await getTicket(params.id);
+  // Await the params resolution
+  const resolvedId = await Promise.resolve(params.id);
+  const ticket = await getTicket(resolvedId);
 
   if (!ticket) {
     notFound();
@@ -109,8 +110,8 @@ export default async function TicketPage({ params }: TicketPageProps) {
         </CardHeader>
         <CardContent className="grid gap-6">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">{ticket.status}</Badge>
-            <Badge variant="secondary">{ticket.priority}</Badge>
+            <Badge variant={statusVariants[ticket.status as Status]}>{ticket.status}</Badge>
+            <Badge variant={priorityVariants[ticket.priority as Priority]}>{ticket.priority}</Badge>
             <Badge variant="secondary">{ticket.category}</Badge>
           </div>
           <div className="text-sm">{ticket.description}</div>
@@ -122,30 +123,13 @@ export default async function TicketPage({ params }: TicketPageProps) {
         </CardContent>
       </Card>
 
-      {/* Messages Section */}
-      <Card>
-        <CardContent className="pt-6">
-          <TicketMessages
-            ticketId={ticket.id}
-            ticketCreatorId={ticket.userId}
-            assignedToId={ticket.assignedId}
-          />
-        </CardContent>
-      </Card>
+      <TicketComments 
+        ticketId={ticket.id} 
+        initialComments={ticket.comments} 
+        status={ticket.status}
+      />
 
-      {/* Comments Section */}
-      <Card>
-        <CardContent className="pt-6">
-          <TicketComments ticketId={ticket.id} comments={ticket.comments} />
-        </CardContent>
-      </Card>
-
-      {/* Blockchain History */}
-      <Card>
-        <CardContent className="pt-6">
-          <TicketBlockchainHistory ticketId={ticket.id} />
-        </CardContent>
-      </Card>
+      <TicketBlockchainHistory ticketId={ticket.id} />
     </div>
   );
 } 

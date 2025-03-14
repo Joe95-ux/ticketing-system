@@ -22,9 +22,12 @@ export async function POST(
     const json = await req.json();
     const body = commentSchema.parse(json);
 
+    // Await the params resolution
+    const id = await Promise.resolve(context.params.id);
+
     // Get the ticket and verify it exists
     const ticket = await db.ticket.findUnique({
-      where: { id: context.params.id },
+      where: { id },
       include: {
         createdBy: true,
         assignedTo: true,
@@ -61,7 +64,7 @@ export async function POST(
     const comment = await db.comment.create({
       data: {
         content: body.content,
-        ticketId: context.params.id,
+        ticketId: id,
         userId: session.user.id,
       },
       include: {
@@ -131,8 +134,11 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Await the params resolution
+    const id = await Promise.resolve(context.params.id);
+
     const ticket = await db.ticket.findUnique({
-      where: { id: context.params.id },
+      where: { id },
     });
 
     if (!ticket) {
@@ -151,7 +157,7 @@ export async function GET(
     }
 
     const comments = await db.comment.findMany({
-      where: { ticketId: context.params.id },
+      where: { ticketId: id },
       include: {
         user: true,
       },
