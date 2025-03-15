@@ -52,7 +52,7 @@ export async function POST(
     const updatedTicket = await db.ticket.update({
       where: { id: context.params.id },
       data: {
-        assignedId: body.assignedId,
+        assignedId: body.assignedId || null,
         status: "IN_PROGRESS",
       },
       include: {

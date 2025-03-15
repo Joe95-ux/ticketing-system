@@ -9,10 +9,7 @@ const commentSchema = z.object({
   content: z.string().min(1),
 });
 
-export async function POST(
-  req: Request,
-  context: { params: { id: string } }
-) {
+export async function POST(req: Request, context: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -23,7 +20,7 @@ export async function POST(
     const body = commentSchema.parse(json);
 
     // Await the params resolution
-    const id = await Promise.resolve(context.params.id);
+    const { id } = context.params;
 
     // Get the ticket and verify it exists
     const ticket = await db.ticket.findUnique({
@@ -48,10 +45,10 @@ export async function POST(
 
     // Check if user can comment on this ticket
     const canComment =
-      session.user.id === ticket.userId || // Ticket creator
-      session.user.id === ticket.assignedId || // Assigned support staff
+      session.user.id === ticket.createdBy.id || // Ticket creator
+      (ticket.assignedTo && session.user.id === ticket.assignedTo.id) || // Assigned staff
       session.user.role === "ADMIN" || // Admin
-      session.user.role === "SUPPORT"; // Other support staff can suggest solutions
+      session.user.role === "SUPPORT"; // Other support staff
 
     if (!canComment) {
       return new NextResponse(
@@ -73,11 +70,18 @@ export async function POST(
     });
 
     // Determine who needs to be notified
-    const notifyUsers = new Set<{ email: string; name: string | null }>();
+    const notifyUsers = new Map<
+      string,
+      { email: string; name: string | null }
+    >();
+
+    const addUserToNotify = (user: { email: string; name: string | null }) => {
+      if (user.email) notifyUsers.set(user.email, user);
+    };
 
     // Always notify the ticket creator if they're not the commenter
     if (ticket.createdBy.id !== session.user.id) {
-      notifyUsers.add({
+      addUserToNotify({
         email: ticket.createdBy.email!,
         name: ticket.createdBy.name,
       });
@@ -85,16 +89,18 @@ export async function POST(
 
     // Notify assigned support staff if they're not the commenter
     if (ticket.assignedTo && ticket.assignedTo.id !== session.user.id) {
-      notifyUsers.add({
+      addUserToNotify({
         email: ticket.assignedTo.email!,
         name: ticket.assignedTo.name,
       });
     }
 
     // If comment is from support staff or admin, notify the ticket creator
-    if ((session.user.role === "SUPPORT" || session.user.role === "ADMIN") && 
-        ticket.createdBy.id !== session.user.id) {
-      notifyUsers.add({
+    if (
+      (session.user.role === "SUPPORT" || session.user.role === "ADMIN") &&
+      ticket.createdBy.id !== session.user.id
+    ) {
+      addUserToNotify({
         email: ticket.createdBy.email!,
         name: ticket.createdBy.name,
       });
@@ -102,7 +108,7 @@ export async function POST(
 
     // Send notifications
     await Promise.all(
-      Array.from(notifyUsers).map((user) =>
+      Array.from(notifyUsers.values()).map((user) =>
         sendTicketEmail("ticket-updated", {
           ticketId: ticket.id,
           ticketTitle: ticket.title,
@@ -124,10 +130,7 @@ export async function POST(
   }
 }
 
-export async function GET(
-  req: Request,
-  context: { params: { id: string } }
-) {
+export async function GET(req: Request, context: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -171,4 +174,4 @@ export async function GET(
     console.error("Error fetching comments:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
-} 
+}

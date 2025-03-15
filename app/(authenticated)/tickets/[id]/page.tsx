@@ -34,39 +34,12 @@ interface TicketPageProps {
   };
 }
 
-async function getTicket(id: string) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    return null;
-  }
-
-  const ticket = await db.ticket.findUnique({
-    where: { id },
-    include: {
-      createdBy: true,
-      assignedTo: true,
-      comments: {
-        include: {
-          user: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-    },
-  });
-
-  return ticket;
-}
 
 export async function generateMetadata({
   params,
 }: TicketPageProps): Promise<Metadata> {
-  // Await the params resolution
-  const resolvedParams = await Promise.resolve(params);
   const ticket = await db.ticket.findUnique({
-    where: { id: resolvedParams.id },
+    where: { id: params.id },
   });
 
   if (!ticket) {
@@ -82,9 +55,8 @@ export async function generateMetadata({
 }
 
 export default async function TicketPage({ params }: TicketPageProps) {
-  // Await the params resolution
-  const resolvedId = await Promise.resolve(params.id);
-  const ticket = await getTicket(resolvedId);
+  
+  const ticket = await getTicket(params.id);
 
   if (!ticket) {
     notFound();
@@ -133,3 +105,29 @@ export default async function TicketPage({ params }: TicketPageProps) {
     </div>
   );
 } 
+
+async function getTicket(id: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    return null;
+  }
+
+  const ticket = await db.ticket.findUnique({
+    where: { id },
+    include: {
+      createdBy: true,
+      assignedTo: true,
+      comments: {
+        include: {
+          user: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
+  });
+
+  return ticket;
+}

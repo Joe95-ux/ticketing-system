@@ -32,9 +32,10 @@ export async function PATCH(
 
     const { status, txHash } = updateSchema.parse(body);
 
-    if (!status) {
-      return new NextResponse("Status is required", { status: 400 });
+    if (!Object.keys(body).length) {
+      return new NextResponse("At least one field must be provided", { status: 400 });
     }
+    
 
     const { id } = context.params;
 

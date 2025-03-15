@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,70 +5,6 @@ generator client {
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
-}
-
-model User {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  name          String?
-  email         String    @unique
-  password      String
-  image         String?
-  role          Role      @default(USER)
-  walletAddress String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  tickets       Ticket[]  @relation("CreatedTickets")
-  assigned      Ticket[]  @relation("AssignedTickets")
-  comments      Comment[]
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
-}
-
-model Ticket {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String
-  status      String
-  priority    String
-  category    String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  userId      String    @db.ObjectId
-  assignedId  String?   @db.ObjectId
-  createdBy   User      @relation("CreatedTickets", fields: [userId], references: [id])
-  assignedTo  User?     @relation("AssignedTickets", fields: [assignedId], references: [id])
-  comments    Comment[]
-  messages    Message[]
-
-  @@index([userId])
-  @@index([assignedId])
-}
-
-model Comment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @db.ObjectId
-  ticket    Ticket   @relation(fields: [ticketId], references: [id])
-  ticketId  String   @db.ObjectId
-}
-
-model Message {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  content     String
-  createdAt   DateTime @default(now())
-  senderId    String   @db.ObjectId
-  recipientId String   @db.ObjectId
-  ticketId    String   @db.ObjectId
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
-  recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id])
-  ticket      Ticket   @relation(fields: [ticketId], references: [id])
-
-  @@index([senderId])
-  @@index([recipientId])
-  @@index([ticketId])
 }
 
 enum Role {
@@ -103,4 +33,76 @@ enum Category {
   BILLING
   FEATURE_REQUEST
   BUG
+}
+
+enum MessageType {
+  USER_MESSAGE
+  SYSTEM_UPDATE
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String    @unique
+  password      String
+  image         String?
+  role          Role      @default(USER)
+  walletAddress String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  tickets       Ticket[]  @relation("CreatedTickets")
+  assigned      Ticket[]  @relation("AssignedTickets")
+  comments      Comment[]
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+model Ticket {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  status      Status    @default(OPEN)
+  priority    Priority  @default(MEDIUM)
+  category    Category
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String    @db.ObjectId
+  assignedId  String?   @db.ObjectId
+  createdBy   User      @relation("CreatedTickets", fields: [userId], references: [id])
+  assignedTo  User?     @relation("AssignedTickets", fields: [assignedId], references: [id])
+  comments    Comment[]
+  messages    Message[]
+
+  @@index([userId])
+  @@index([assignedId])
+  @@index([status])
+  @@index([priority])
+}
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.ObjectId
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  ticketId  String   @db.ObjectId
+}
+
+model Message {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  content     String
+  createdAt   DateTime @default(now())
+  senderId    String?  @db.ObjectId  // Nullable for system messages
+  recipientId String?  @db.ObjectId  // Nullable if it's a general update
+  ticketId    String   @db.ObjectId
+  type        MessageType @default(USER_MESSAGE)
+  sender      User?    @relation("SentMessages", fields: [senderId], references: [id])
+  recipient   User?    @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  ticket      Ticket   @relation(fields: [ticketId], references: [id])
+
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([ticketId])
 }
