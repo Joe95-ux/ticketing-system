@@ -34,12 +34,37 @@ interface TicketPageProps {
   };
 }
 
+async function getTicket(id: string) {
+  const session = await getServerSession(authOptions);
 
-export async function generateMetadata({
-  params,
-}: TicketPageProps): Promise<Metadata> {
+  if (!session?.user) {
+    return null;
+  }
+
   const ticket = await db.ticket.findUnique({
-    where: { id: params.id },
+    where: { id },
+    include: {
+      createdBy: true,
+      assignedTo: true,
+      comments: {
+        include: {
+          user: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
+  });
+
+  return ticket;
+}
+
+export async function generateMetadata(props: TicketPageProps): Promise<Metadata> {
+  const id = props.params.id;
+  
+  const ticket = await db.ticket.findUnique({
+    where: { id },
   });
 
   if (!ticket) {
@@ -54,9 +79,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function TicketPage({ params }: TicketPageProps) {
-  
-  const ticket = await getTicket(params.id);
+export default async function TicketPage(props: TicketPageProps) {
+  const id = props.params.id;
+  const ticket = await getTicket(id);
 
   if (!ticket) {
     notFound();
@@ -104,30 +129,4 @@ export default async function TicketPage({ params }: TicketPageProps) {
       <TicketBlockchainHistory ticketId={ticket.id} />
     </div>
   );
-} 
-
-async function getTicket(id: string) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    return null;
-  }
-
-  const ticket = await db.ticket.findUnique({
-    where: { id },
-    include: {
-      createdBy: true,
-      assignedTo: true,
-      comments: {
-        include: {
-          user: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-    },
-  });
-
-  return ticket;
 }

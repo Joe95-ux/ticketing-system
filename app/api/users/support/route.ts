@@ -6,13 +6,19 @@ import { db } from "@/lib/db";
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
+    console.log("Session data:", {
+      user: session?.user,
+      role: session?.user?.role,
+    });
 
     if (!session?.user) {
+      console.log("No session or user found");
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Only allow admins to fetch support users for assignment
-    if (session.user.role !== "ADMIN") {
+    // Allow both admins and support staff to fetch support users
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPPORT") {
+      console.log("User role not authorized:", session.user.role);
       return new NextResponse("Forbidden", { status: 403 });
     }
 
@@ -20,9 +26,6 @@ export async function GET() {
     const supportUsers = await db.user.findMany({
       where: {
         role: "SUPPORT",
-        email: {
-          not: "",
-        },
       },
       select: {
         id: true,
@@ -32,17 +35,18 @@ export async function GET() {
       },
       orderBy: [
         { name: "asc" },
-        { email: "asc" }, // Secondary sort by email if name is null
+        { email: "asc" },
       ],
     });
 
-    if (!supportUsers.length) {
-      return NextResponse.json([]);
-    }
+    console.log("Found support users:", supportUsers.length);
 
     return NextResponse.json(supportUsers);
   } catch (error) {
-    console.error("Failed to fetch support users:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    console.error("Failed to fetch support users. Full error:", error);
+    return new NextResponse(
+      `Internal Server Error: ${error instanceof Error ? error.message : "Unknown error"}`, 
+      { status: 500 }
+    );
   }
 } 

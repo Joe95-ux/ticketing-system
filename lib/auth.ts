@@ -1,14 +1,18 @@
 import { NextAuthOptions } from "next-auth"
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { db } from "@/lib/db"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
-  pages: {
-    signIn: '/login',
-  },
+  adapter: PrismaAdapter(db),
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  pages: {
+    signIn: "/login",
+    error: "/login", // Redirect to login page on error
   },
   providers: [
     CredentialsProvider({
@@ -53,6 +57,7 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email
         token.name = user.name
         token.picture = user.image
+        token.role = user.role || "USER"
       }
       return token
     },
@@ -62,6 +67,7 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email as string;
         session.user.name = token.name as string;
         session.user.image = token.picture as string | null;
+        session.user.role = token.role as "ADMIN" | "SUPPORT" | "USER";
       }
       return session;
     },
