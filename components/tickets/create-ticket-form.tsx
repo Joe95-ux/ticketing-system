@@ -54,6 +54,8 @@ interface Ticket {
 export function CreateTicketForm() {
   const router = useRouter();
   const [similarTickets, setSimilarTickets] = useState<Ticket[] | null>(null);
+  const[isLoading, setIsLoading] = useState<boolean>(false)
+
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -67,6 +69,7 @@ export function CreateTicketForm() {
 
   const onSubmit = async (data: FormData) => {
     try {
+      setIsLoading(true);
       const response = await fetch("/api/tickets", {
         method: "POST",
         headers: {
@@ -91,6 +94,8 @@ export function CreateTicketForm() {
       }
     } catch (error) {
       toast.error("Failed to create ticket. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -209,8 +214,13 @@ export function CreateTicketForm() {
               )}
             />
           </div>
-          <Button type="submit" className="w-full">
-            Create Ticket
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Creating ticket...
+              </div>
+            ) : "Create Ticket"}
           </Button>
         </form>
       </Form>

@@ -3,45 +3,32 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
+  const { pathname } = request.nextUrl;
 
-  // Define public paths that don't require authentication
-  const isPublicPath = path === "/login" || path === "/register" || path === "/";
-  const isAdminPath = path.startsWith("/admin");
-
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-
-  // Redirect authenticated users away from public paths
-  if (isPublicPath && token) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // Skip auth check for these paths
+  if (
+    pathname.startsWith("/_next") || 
+    pathname.startsWith("/static") || 
+    pathname.startsWith("/favicon.ico")
+  ) {
+    return NextResponse.next();
   }
 
-  // Redirect unauthenticated users to login
-  if (!isPublicPath && !token) {
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+
+  // Redirect unauthenticated users trying to access protected routes
+  if (!token && pathname !== "/login" && pathname !== "/register") {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Protect admin routes
-  if (isAdminPath && token?.role !== "ADMIN") {
+  // Redirect logged-in users away from login/register pages
+  if (token && (pathname === "/login" || pathname === "/register")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();
 }
 
-// Configure which routes to run middleware on
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-  ],
-}; 
+  matcher: ["/((?!api|_next|static|favicon.ico).*)"], // Skip unnecessary paths
+};

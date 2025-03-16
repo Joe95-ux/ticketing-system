@@ -55,6 +55,7 @@ export async function POST(request: Request) {
         content: data.content,
         senderId: session.user.id,
         recipientId: data.recipientId,
+        ticketId: data.ticketId,
       }
     })
 

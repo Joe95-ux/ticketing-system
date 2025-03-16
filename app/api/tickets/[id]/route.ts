@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import * as z from "zod";
+import { requireAuth, canManageTicket } from "@/lib/auth-helpers";
 
 const updateSchema = z.object({
   status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]).optional(),
@@ -16,11 +15,8 @@ export async function PATCH(
   context: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    const session = await requireAuth();
+    if (session instanceof NextResponse) return session;
 
     let body;
     try {
@@ -35,7 +31,6 @@ export async function PATCH(
     if (!Object.keys(body).length) {
       return new NextResponse("At least one field must be provided", { status: 400 });
     }
-    
 
     const { id } = context.params;
 
@@ -50,13 +45,7 @@ export async function PATCH(
     }
 
     // Check if user has permission to update
-    const canUpdate =
-      session.user.role === "ADMIN" ||
-      session.user.role === "SUPPORT" ||
-      session.user.id === ticket.userId ||
-      session.user.id === ticket.assignedId;
-
-    if (!canUpdate) {
+    if (!canManageTicket(session, ticket)) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
@@ -88,11 +77,8 @@ export async function GET(
   context: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    const session = await requireAuth();
+    if (session instanceof NextResponse) return session;
 
     const { id } = await Promise.resolve(context.params);
     const ticket = await db.ticket.findUnique({

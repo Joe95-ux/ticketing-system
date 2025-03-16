@@ -20,7 +20,7 @@ export async function POST(
     }
 
     // Only admins can assign tickets
-    if (session.user.role !== "ADMIN") {
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPPORT") {
       return new NextResponse("Forbidden", { status: 403 });
     }
 

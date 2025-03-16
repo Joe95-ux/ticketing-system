@@ -1,7 +1,5 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { TicketActions } from "@/components/tickets/ticket-actions";
 import { TicketComments } from "@/components/tickets/ticket-comments";
@@ -35,12 +33,6 @@ interface TicketPageProps {
 }
 
 async function getTicket(id: string) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    return null;
-  }
-
   const ticket = await db.ticket.findUnique({
     where: { id },
     include: {
@@ -65,6 +57,10 @@ export async function generateMetadata(props: TicketPageProps): Promise<Metadata
   
   const ticket = await db.ticket.findUnique({
     where: { id },
+    select: {
+      title: true,
+      description: true,
+    },
   });
 
   if (!ticket) {

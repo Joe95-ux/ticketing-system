@@ -4,20 +4,23 @@ import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TicketList } from "@/components/tickets/ticket-list";
 import Link from "next/link";
+import { Ticket } from "@/types";
 
 export const metadata: Metadata = {
   title: "Tickets | Ticketing System",
   description: "Manage your support tickets",
 };
 
-async function getTickets() {
-  return db.ticket.findMany({
+async function getTickets(): Promise<Ticket[]> {
+  const tickets = await db.ticket.findMany({
     orderBy: { createdAt: "desc" },
     include: {
       createdBy: true,
       assignedTo: true,
     },
   });
+
+  return tickets as unknown as Ticket[];
 }
 
 export default async function TicketsPage() {
