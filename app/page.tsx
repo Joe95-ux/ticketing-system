@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ClientSessionProvider } from "@/components/client-session-provider";
+import { useSession } from "next-auth/react";
 
 export default function HomePage() {
+  const { data: session } = useSession();
+  const url = session ? "/dashboard" : "/register";
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4">
       <div className="mx-auto max-w-3xl space-y-8 text-center">
@@ -16,15 +18,13 @@ export default function HomePage() {
           Track issues, collaborate with your team, and resolve tickets efficiently
           with blockchain-powered tracking.
         </p>
-        <ClientSessionProvider>
-          {(session) => (
-            <div className="space-y-4">
+        <div className="space-y-4">
               <Button
                 size="lg"
                 className="h-12 px-8 text-lg"
                 asChild
               >
-                <Link href={session ? "/dashboard" : "/register"}>
+                <Link href={url}>
                   Get Started
                 </Link>
               </Button>
@@ -32,8 +32,6 @@ export default function HomePage() {
                 {session ? "Continue to dashboard" : "No account required to try"}
               </p>
             </div>
-          )}
-        </ClientSessionProvider>
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
           <div className="space-y-2">
             <h2 className="text-xl font-semibold">Simple & Intuitive</h2>

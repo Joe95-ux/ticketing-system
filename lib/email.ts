@@ -67,19 +67,30 @@ export async function sendTicketEmail(
   template: EmailTemplate,
   props: TicketEmailProps
 ) {
+  if (!process.env.RESEND_API_KEY) {
+    console.error('RESEND_API_KEY is not configured');
+    return { success: false, error: 'Email service not configured' };
+  }
+
   try {
     const { subject, html } = templates[template](props);
     
-    await resend.emails.send({
-      from: 'ogorktabi@gmail.com',
+    const result = await resend.emails.send({
+      from: "onboarding@resend.dev",
       to: props.recipientEmail,
       subject,
-      html
+      html,
+      replyTo: 'no-reply@' + process.env.NEXT_PUBLIC_APP_URL?.replace('http://', '').replace('https://', '')
     });
 
-    return { success: true };
+    if (!result.data?.id) {
+      throw new Error('Failed to send email - no id returned');
+    }
+
+    return { success: true, messageId: result.data.id };
   } catch (error) {
     console.error('Failed to send email:', error);
-    return { success: false, error };
+    // Throw the error so the API route can handle it
+    throw new Error(error instanceof Error ? error.message : 'Failed to send email');
   }
 } 

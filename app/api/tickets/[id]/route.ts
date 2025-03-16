@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import * as z from "zod";
 import { requireAuth, canManageTicket } from "@/lib/auth-helpers";
+import { revalidatePath } from "next/cache";
 
 const updateSchema = z.object({
   status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]).optional(),
@@ -26,12 +27,11 @@ export async function PATCH(
       return new NextResponse("Invalid JSON", { status: 400 });
     }
 
-    const { status, txHash } = updateSchema.parse(body);
-
     if (!Object.keys(body).length) {
       return new NextResponse("At least one field must be provided", { status: 400 });
     }
 
+    const parsed = updateSchema.parse(body);
     const { id } = context.params;
 
     // Fetch the current ticket to check permissions
@@ -53,14 +53,17 @@ export async function PATCH(
     const updatedTicket = await db.ticket.update({
       where: { id },
       data: {
-        status,
-        txHash,
+        ...(parsed.status && { status: parsed.status }),
+        ...(parsed.txHash && { txHash: parsed.txHash }),
       },
       include: {
         createdBy: true,
         assignedTo: true,
       },
     });
+
+    // Revalidate the ticket page
+    revalidatePath(`/tickets/${id}`);
 
     return NextResponse.json(updatedTicket);
   } catch (error) {

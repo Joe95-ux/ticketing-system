@@ -134,14 +134,12 @@ export function TicketActions({ ticket }: TicketActionsProps) {
         body: JSON.stringify({ status, txHash }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to update ticket in database");
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update ticket in database");
       }
 
-      // Force revalidation of the tickets page
-      await fetch(`/api/revalidate?path=/tickets/${ticket.id}`);
+      const data = await response.json();
 
       toast.success("Ticket status has been updated successfully.");
       router.refresh();

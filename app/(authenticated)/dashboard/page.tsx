@@ -26,8 +26,8 @@ async function getTicketStats() {
   return { total, open, inProgress, resolved };
 }
 
-async function getRecentTickets() {
-  return db.ticket.findMany({
+async function getRecentTickets(): Promise<Ticket[]> {
+  const tickets = await db.ticket.findMany({
     take: 5,
     orderBy: { createdAt: "desc" },
     include: {
@@ -35,6 +35,8 @@ async function getRecentTickets() {
       assignedTo: true,
     },
   });
+
+  return tickets as (typeof tickets[0] & { txHash: string | null })[];
 }
 
 export default async function DashboardPage() {

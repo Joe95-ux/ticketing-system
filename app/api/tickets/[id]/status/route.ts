@@ -54,29 +54,34 @@ export async function POST(
 
     // Send notifications based on the new status
     if (body.status === "RESOLVED" || body.status === "CLOSED") {
-      // Notify the ticket creator
-      await sendTicketEmail("ticket-resolved", {
-        ticketId: ticket.id,
-        ticketTitle: ticket.title,
-        recipientEmail: ticket.createdBy.email!,
-        recipientName: ticket.createdBy.name,
-      });
+      try {
+        // Notify the ticket creator
+        await sendTicketEmail("ticket-resolved", {
+          ticketId: ticket.id,
+          ticketTitle: ticket.title,
+          recipientEmail: ticket.createdBy.email!,
+          recipientName: ticket.createdBy.name,
+        });
 
-      // Notify admins
-      const admins = await db.user.findMany({
-        where: { role: "ADMIN" },
-      });
+        // Notify admins
+        const admins = await db.user.findMany({
+          where: { role: "ADMIN" },
+        });
 
-      await Promise.all(
-        admins.map((admin) =>
-          sendTicketEmail("ticket-resolved", {
-            ticketId: ticket.id,
-            ticketTitle: ticket.title,
-            recipientEmail: admin.email!,
-            recipientName: admin.name,
-          })
-        )
-      );
+        await Promise.all(
+          admins.map((admin) =>
+            sendTicketEmail("ticket-resolved", {
+              ticketId: ticket.id,
+              ticketTitle: ticket.title,
+              recipientEmail: admin.email!,
+              recipientName: admin.name,
+            })
+          )
+        );
+      } catch (emailError) {
+        console.error("Failed to send notification emails:", emailError);
+        // Continue with the response but log the error
+      }
     } else {
       // For other status changes, notify relevant parties
       const notifyUsers = new Set<{ email: string; name: string | null }>();
@@ -97,17 +102,22 @@ export async function POST(
         });
       }
 
-      await Promise.all(
-        Array.from(notifyUsers).map((user) =>
-          sendTicketEmail("ticket-updated", {
-            ticketId: ticket.id,
-            ticketTitle: ticket.title,
-            recipientEmail: user.email,
-            recipientName: user.name,
-            updaterName: session.user.name,
-          })
-        )
-      );
+      try {
+        await Promise.all(
+          Array.from(notifyUsers).map((user) =>
+            sendTicketEmail("ticket-updated", {
+              ticketId: ticket.id,
+              ticketTitle: ticket.title,
+              recipientEmail: user.email,
+              recipientName: user.name,
+              updaterName: session.user.name,
+            })
+          )
+        );
+      } catch (emailError) {
+        console.error("Failed to send notification emails:", emailError);
+        // Continue with the response but log the error
+      }
     }
 
     return NextResponse.json(updatedTicket);
