@@ -58,7 +58,7 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
   const { data: session } = useSession();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const categoryCounts = useCategoryCounts();
+  const { counts: categoryCounts } = useCategoryCounts();
 
   // Handle initial state based on screen size
   useEffect(() => {

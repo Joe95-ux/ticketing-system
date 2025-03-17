@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
+import { handleTicketCreated } from "@/lib/events";
 
 const formSchema = z.object({
   title: z.string().min(1, {
@@ -88,6 +89,7 @@ export function CreateTicketForm() {
       setSimilarTickets(result.similarTickets);
 
       if (result.ticket) {
+        handleTicketCreated(result);
         toast.success("Ticket created successfully!");
         router.push(`/tickets/${result.ticket.id}`);
         router.refresh();

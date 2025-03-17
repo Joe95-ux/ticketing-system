@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import * as z from "zod";
 import { sendTicketEmail } from "@/lib/email";
+import { categoryConfig } from "@/components/tickets/category-badge";
 
 const createTicketSchema = z.object({
   title: z.string().min(1, {
@@ -15,10 +16,6 @@ const createTicketSchema = z.object({
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]),
   category: z.enum(["GENERAL", "TECHNICAL", "BILLING", "FEATURE_REQUEST", "BUG"]),
 });
-
-type Status = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
-type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-type Category = "GENERAL" | "TECHNICAL" | "BILLING" | "FEATURE_REQUEST" | "BUG";
 
 export async function POST(req: Request) {
   try {
@@ -90,6 +87,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ticket,
       similarTickets: similarTickets.length > 0 ? similarTickets : null,
+      event: 'ticket-created'
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -100,36 +98,47 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const category = searchParams.get("category");
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const skip = (page - 1) * limit;
+
   try {
-    const session = await getServerSession(authOptions);
+    const [tickets, total] = await Promise.all([
+      db.ticket.findMany({
+        where: category ? {
+          category: category.toUpperCase() as keyof typeof categoryConfig,
+        } : undefined,
+        orderBy: { createdAt: "desc" },
+        include: {
+          createdBy: true,
+          assignedTo: true,
+        },
+        skip,
+        take: limit,
+      }),
+      db.ticket.count({
+        where: category ? {
+          category: category.toUpperCase() as keyof typeof categoryConfig,
+        } : undefined,
+      }),
+    ]);
 
-    if (!session?.user) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status") as Status | null;
-    const priority = searchParams.get("priority") as Priority | null;
-    const category = searchParams.get("category") as Category | null;
-
-    const tickets = await db.ticket.findMany({
-      where: {
-        ...(status && { status }),
-        ...(priority && { priority }),
-        ...(category && { category }),
-      },
-      orderBy: { createdAt: "desc" },
-      include: {
-        createdBy: true,
-        assignedTo: true,
+    return NextResponse.json({
+      tickets,
+      pagination: {
+        total,
+        pages: Math.ceil(total / limit),
+        page,
+        limit,
       },
     });
-
-    return NextResponse.json(tickets);
   } catch (error) {
+    console.error("Failed to fetch tickets:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Failed to fetch tickets" },
       { status: 500 }
     );
   }

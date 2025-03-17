@@ -2,42 +2,51 @@
 
 import { useEffect, useState } from "react";
 import { categoryConfig } from "./category-badge";
+import { TICKET_EVENTS } from "@/lib/events";
 
 type CategoryCounts = {
   [K in keyof typeof categoryConfig]: number;
 };
 
+// Cache the counts in memory
+let cachedCounts: CategoryCounts | null = null;
+
 export function useCategoryCounts() {
-  const [counts, setCounts] = useState<CategoryCounts | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastFetchTime, setLastFetchTime] = useState(0);
+  const [counts, setCounts] = useState<CategoryCounts | null>(cachedCounts);
 
   useEffect(() => {
     const fetchCounts = async () => {
-      // If we're already loading or if it's been less than 30 seconds since last fetch, skip
-      const now = Date.now();
-      if (isLoading || (lastFetchTime && now - lastFetchTime < 30000)) {
-        return;
-      }
-
-      setIsLoading(true);
       try {
-        const response = await fetch('/api/tickets/category-counts');
+        const url = new URL('/api/tickets/category-counts', window.location.origin);
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch counts: ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        cachedCounts = data;
         setCounts(data);
-        setLastFetchTime(now);
       } catch (error) {
         console.error('Failed to fetch category counts:', error);
-      } finally {
-        setIsLoading(false);
+        // If we have cached data, keep using it
+        if (cachedCounts && !counts) {
+          setCounts(cachedCounts);
+        }
       }
     };
 
+    // Fetch counts on mount
     fetchCounts();
-    // Refresh counts every minute, but only if the component is mounted
-    const interval = setInterval(fetchCounts, 60000);
-    return () => clearInterval(interval);
-  }, [isLoading, lastFetchTime]);
 
-  return counts;
+    // Listen for ticket creation events
+    const handleTicketCreated = () => {
+      fetchCounts();
+    };
+
+    window.addEventListener(TICKET_EVENTS.CREATED, handleTicketCreated);
+    return () => window.removeEventListener(TICKET_EVENTS.CREATED, handleTicketCreated);
+  }, []);
+
+  return { counts };
 } 
