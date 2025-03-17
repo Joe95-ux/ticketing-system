@@ -175,7 +175,8 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
               </Link>
             ))}
 
-            {pathname.includes('/tickets') && (
+            {/* Categories section - show on both dashboard and tickets pages */}
+            {(pathname.includes('/tickets') || pathname === '/dashboard') && (
               <>
                 <div className={cn(
                   "mt-4 mb-2 px-3 text-xs font-semibold text-muted-foreground",
@@ -194,7 +195,16 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
                     )}
                   >
                     <div className="flex items-center gap-3">
-                      <category.icon className={cn("h-4 w-4", category.color)} />
+                      <div className={cn(
+                        "p-1 rounded",
+                        category.color.split(" ")[0],
+                        "flex items-center justify-center"
+                      )}>
+                        <category.icon className={cn(
+                          "h-4 w-4",
+                          category.color.split(" ")[1]
+                        )} />
+                      </div>
                       {!isCollapsed && category.label}
                     </div>
                     {!isCollapsed && category.count > 0 && (

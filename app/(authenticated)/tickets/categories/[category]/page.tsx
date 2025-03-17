@@ -37,20 +37,26 @@ export default async function CategoryPage({
 }: {
   params: { category: string };
 }) {
-  const category = params.category.toUpperCase();
+  // Wait for params to be available
+  const categoryParam = await Promise.resolve(params.category);
+  const category = categoryParam.toUpperCase();
   
   if (!Object.keys(categories).includes(category)) {
     notFound();
   }
 
   const tickets = await getTicketsByCategory(category);
+  const categoryLabel = categories[category as keyof typeof categories];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{categories[category as keyof typeof categories]} Tickets</h1>
+        <h1 className="text-3xl font-bold">{categoryLabel} Tickets</h1>
       </div>
-      <TicketList tickets={tickets} />
+      <TicketList 
+        tickets={tickets} 
+        emptyMessage={`No tickets found in the ${categoryLabel.toLowerCase()} category`}
+      />
     </div>
   );
 } 

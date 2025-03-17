@@ -13,9 +13,12 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { CategoryBadge } from "./category-badge";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 interface TicketListProps {
   tickets: Ticket[];
+  emptyMessage?: string;
 }
 
 const statusVariants = {
@@ -32,7 +35,23 @@ const priorityVariants = {
   URGENT: "destructive",
 } as const;
 
-export function TicketList({ tickets }: TicketListProps) {
+export function TicketList({ tickets, emptyMessage = "No tickets found" }: TicketListProps) {
+  if (!tickets.length) {
+    return (
+      <div className="rounded-md border p-8 text-center">
+        <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center gap-4">
+          <div className="text-muted-foreground">{emptyMessage}</div>
+          <Link href="/tickets/new">
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create Ticket
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-md border">
       <Table>
