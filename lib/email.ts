@@ -76,21 +76,24 @@ export async function sendTicketEmail(
     const { subject, html } = templates[template](props);
     
     const result = await resend.emails.send({
-      from: "onboarding@resend.dev",
-      to: props.recipientEmail,
+      from: "Ticketing System <onboarding@resend.dev>",
+      to: "ogorktabi@gmail.com",
       subject,
-      html,
-      replyTo: 'no-reply@' + process.env.NEXT_PUBLIC_APP_URL?.replace('http://', '').replace('https://', '')
+      html
     });
 
-    if (!result.data?.id) {
-      throw new Error('Failed to send email - no id returned');
+    console.log('Email send result:', result); // Debug log
+
+    if (!result.data) {
+      throw new Error('No response data from Resend');
     }
 
     return { success: true, messageId: result.data.id };
   } catch (error) {
     console.error('Failed to send email:', error);
-    // Throw the error so the API route can handle it
-    throw new Error(error instanceof Error ? error.message : 'Failed to send email');
+    if (error instanceof Error) {
+      console.error('Error details:', error.message);
+    }
+    throw error; // Preserve the original error
   }
 } 

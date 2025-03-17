@@ -1,18 +1,26 @@
+"use client";
+
 import { Metadata } from "next";
 import { db } from "@/lib/db";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TicketList } from "@/components/tickets/ticket-list";
+import { CategoryFilter } from "@/components/tickets/category-filter";
 import Link from "next/link";
 import { Ticket } from "@/types";
+import { useState, useEffect } from "react";
+import { categoryConfig } from "@/components/tickets/category-badge";
 
 export const metadata: Metadata = {
   title: "Tickets | Ticketing System",
   description: "Manage your support tickets",
 };
 
-async function getTickets(): Promise<Ticket[]> {
+async function getTickets(category: string | null = null): Promise<Ticket[]> {
   const tickets = await db.ticket.findMany({
+    where: category ? {
+      category: category as keyof typeof categoryConfig,
+    } : undefined,
     orderBy: { createdAt: "desc" },
     include: {
       createdBy: true,
@@ -23,8 +31,18 @@ async function getTickets(): Promise<Ticket[]> {
   return tickets as unknown as Ticket[];
 }
 
-export default async function TicketsPage() {
-  const tickets = await getTickets();
+export default function TicketsPage() {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+
+  // Fetch tickets when category changes
+  useEffect(() => {
+    const fetchTickets = async () => {
+      const newTickets = await getTickets(selectedCategory);
+      setTickets(newTickets);
+    };
+    fetchTickets();
+  }, [selectedCategory]);
 
   return (
     <div className="space-y-6">
@@ -37,6 +55,12 @@ export default async function TicketsPage() {
           </Link>
         </Button>
       </div>
+      
+      <CategoryFilter
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+      />
+      
       <TicketList tickets={tickets} />
     </div>
   );

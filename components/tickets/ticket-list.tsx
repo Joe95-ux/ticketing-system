@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { CategoryBadge } from "./category-badge";
 
 interface TicketListProps {
   tickets: Ticket[];
@@ -68,7 +69,7 @@ export function TicketList({ tickets }: TicketListProps) {
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge variant="outline">{ticket.category}</Badge>
+                <CategoryBadge category={ticket.category} />
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {formatDistanceToNow(new Date(ticket.createdAt), {

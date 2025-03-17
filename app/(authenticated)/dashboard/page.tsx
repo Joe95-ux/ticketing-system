@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Ticket } from "@/types";
+import { CategoryStats } from "@/components/tickets/category-stats";
 
 export const metadata: Metadata = {
   title: "Dashboard | Ticketing System",
@@ -36,7 +37,7 @@ async function getRecentTickets(): Promise<Ticket[]> {
     },
   });
 
-  return tickets as (typeof tickets[0] & { txHash: string | null })[];
+  return tickets as unknown as Ticket[];
 }
 
 export default async function DashboardPage() {
@@ -48,6 +49,7 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Dashboard</h1>
       </div>
+      
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -86,13 +88,19 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">Category Distribution</h2>
+        <CategoryStats />
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Recent Tickets</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recentTickets.map((ticket: Ticket) => (
+            {recentTickets.map((ticket) => (
               <div
                 key={ticket.id}
                 className="flex items-center justify-between rounded-lg border p-4"

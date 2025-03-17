@@ -12,6 +12,11 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  MessageCircle,
+  Wrench,
+  CreditCard,
+  Lightbulb,
+  Bug,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +27,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { WalletStatus } from "@/components/wallet-status";
+import { categoryConfig } from "@/components/tickets/category-badge";
+import { useCategoryCounts } from "@/components/tickets/category-counts";
 
 const routes = [
   {
@@ -51,6 +58,7 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
   const { data: session } = useSession();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const categoryCounts = useCategoryCounts();
 
   // Handle initial state based on screen size
   useEffect(() => {
@@ -72,6 +80,24 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [onMobileOpenChange]);
+
+  const categories = Object.entries(categoryConfig).map(([key, config]) => {
+    const IconComponent = {
+      GENERAL: MessageCircle,
+      TECHNICAL: Wrench,
+      BILLING: CreditCard,
+      FEATURE_REQUEST: Lightbulb,
+      BUG: Bug,
+    }[key] || MessageCircle;
+
+    return {
+      label: config.label,
+      icon: IconComponent,
+      href: `/tickets/categories/${key.toLowerCase()}`,
+      color: config.color,
+      count: categoryCounts?.[key as keyof typeof categoryConfig] ?? 0,
+    };
+  });
 
   return (
     <>
@@ -148,6 +174,43 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
                 {!isCollapsed && route.label}
               </Link>
             ))}
+
+            {pathname.includes('/tickets') && (
+              <>
+                <div className={cn(
+                  "mt-4 mb-2 px-3 text-xs font-semibold text-muted-foreground",
+                  isCollapsed && "text-center"
+                )}>
+                  {!isCollapsed && "CATEGORIES"}
+                </div>
+                {categories.map((category) => (
+                  <Link
+                    key={category.href}
+                    href={category.href}
+                    className={cn(
+                      "flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground group",
+                      pathname === category.href ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+                      isCollapsed && "justify-center px-2"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <category.icon className={cn("h-4 w-4", category.color)} />
+                      {!isCollapsed && category.label}
+                    </div>
+                    {!isCollapsed && category.count > 0 && (
+                      <span className={cn(
+                        "min-w-[1.5rem] rounded-full px-1.5 py-0.5 text-xs text-center",
+                        pathname === category.href
+                          ? "bg-background text-foreground"
+                          : "bg-muted text-muted-foreground group-hover:bg-accent group-hover:text-accent-foreground"
+                      )}>
+                        {category.count}
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </>
+            )}
           </nav>
         </div>
 
