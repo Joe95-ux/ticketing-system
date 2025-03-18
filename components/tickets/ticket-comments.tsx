@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { RichTextEditor } from "@/components/editor/rich-text-editor";
+import { ContentRenderer } from "@/components/content-renderer";
 
 interface Comment {
   id: string;
@@ -118,10 +119,7 @@ export function TicketComments({ ticketId, initialComments, status }: TicketComm
                     })}
                   </span>
                 </div>
-                <div 
-                  className="text-sm text-muted-foreground prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: comment.content }}
-                />
+                <ContentRenderer content={comment.content} />
               </div>
             </div>
           ))}

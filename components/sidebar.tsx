@@ -53,30 +53,32 @@ interface SidebarProps {
   onMobileOpenChange?: (open: boolean) => void;
 }
 
-// Add this CSS class for custom scrollbar
+// Update the scrollbar styles
 const scrollbarStyles = `
   [data-scrollbar]::-webkit-scrollbar {
     width: 6px;
-    height: 6px;
   }
 
   [data-scrollbar]::-webkit-scrollbar-track {
-    background: transparent;
+    background: #0F172A;
   }
 
   [data-scrollbar]::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--muted-foreground) / 0.3);
-    border-radius: 3px;
+    background-color: #1E293B;
+    border-radius: 10px;
   }
 
   [data-scrollbar]::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground) / 0.5);
+    background-color: hsl(var(--muted-foreground) / 0.4);
   }
 
-  /* For Firefox */
   [data-scrollbar] {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+  }
+
+  [data-scrollbar]:hover {
+    scrollbar-color: hsl(var(--muted-foreground) / 0.4) transparent;
   }
 `;
 
@@ -152,20 +154,11 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
             "flex items-center gap-2",
             isCollapsed && "justify-center"
           )}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-6 w-6"
-            >
-              <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-            </svg>
+            <Ticket className="h-6 w-6 dark:text-white text-black" />
             {!isCollapsed && (
-              <span className="font-semibold">Ticketing System</span>
+              <span className="font-mono text-xl tracking-tight dark:text-white text-black">
+                TixHub
+              </span>
             )}
           </Link>
         </div>
@@ -186,7 +179,7 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-4" data-scrollbar>
+        <div className="flex-1 overflow-hidden hover:overflow-y-auto transition-all py-4" data-scrollbar>
           <nav className="grid gap-1 px-2">
             {routes.map((route) => (
               <Link
@@ -204,7 +197,7 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
             ))}
 
             {/* Categories section - show on both dashboard and tickets pages */}
-            {(pathname.includes('/tickets') || pathname === '/dashboard') && (
+            {!pathname.includes('/auth') && (
               <>
                 <div className={cn(
                   "mt-4 mb-2 px-3 text-xs font-semibold text-muted-foreground",

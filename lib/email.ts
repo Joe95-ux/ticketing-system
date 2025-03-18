@@ -75,25 +75,29 @@ export async function sendTicketEmail(
   try {
     const { subject, html } = templates[template](props);
     
-    const result = await resend.emails.send({
-      from: "Ticketing System <onboarding@resend.dev>",
-      to: "ogorktabi@gmail.com",
-      subject,
-      html
+    // Fire and forget - don't await or throw errors
+    Promise.resolve().then(async () => {
+      try {
+        const result = await resend.emails.send({
+          from: "Ticketing System <onboarding@resend.dev>",
+          to: "ogorktabi@gmail.com",
+          subject,
+          html
+        });
+        console.log('Email send result:', result);
+      } catch (error) {
+        console.error('Failed to send email:', error);
+        if (error instanceof Error) {
+          console.error('Error details:', error.message);
+        }
+      }
     });
 
-    console.log('Email send result:', result); // Debug log
-
-    if (!result.data) {
-      throw new Error('No response data from Resend');
-    }
-
-    return { success: true, messageId: result.data.id };
+    // Return success immediately without waiting for email
+    return { success: true };
   } catch (error) {
-    console.error('Failed to send email:', error);
-    if (error instanceof Error) {
-      console.error('Error details:', error.message);
-    }
-    throw error; // Preserve the original error
+    // If template generation fails, log it but don't block the process
+    console.error('Error preparing email:', error);
+    return { success: false, error: 'Failed to prepare email' };
   }
 } 
