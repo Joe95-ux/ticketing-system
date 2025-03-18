@@ -132,7 +132,7 @@ export async function POST(req: Request, context: { params: paramsType }) {
   }
 }
 
-export async function GET(req: Request, context: { params: { id: string } }) {
+export async function GET(req: Request, context: { params: paramsType }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -140,7 +140,7 @@ export async function GET(req: Request, context: { params: { id: string } }) {
     }
 
     // Await the params resolution
-    const id = await Promise.resolve(context.params.id);
+    const { id } = await context.params;
 
     const ticket = await db.ticket.findUnique({
       where: { id },
