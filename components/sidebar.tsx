@@ -53,6 +53,33 @@ interface SidebarProps {
   onMobileOpenChange?: (open: boolean) => void;
 }
 
+// Add this CSS class for custom scrollbar
+const scrollbarStyles = `
+  [data-scrollbar]::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  [data-scrollbar]::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  [data-scrollbar]::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+  }
+
+  [data-scrollbar]::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* For Firefox */
+  [data-scrollbar] {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+`;
+
 export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -101,6 +128,7 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
 
   return (
     <>
+      <style jsx global>{scrollbarStyles}</style>
       {/* Backdrop for mobile - only shown when sidebar is open */}
       {isMobile && mobileOpen && (
         <div 
@@ -158,7 +186,7 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto py-4" data-scrollbar>
           <nav className="grid gap-1 px-2">
             {routes.map((route) => (
               <Link

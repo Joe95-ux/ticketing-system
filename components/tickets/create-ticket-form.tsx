@@ -15,7 +15,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -28,6 +27,7 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 import { handleTicketCreated } from "@/lib/events";
+import { RichTextEditor } from "@/components/editor/rich-text-editor";
 
 const formSchema = z.object({
   title: z.string().min(1, {
@@ -150,9 +150,10 @@ export function CreateTicketForm() {
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea
+                  <RichTextEditor
+                    content={field.value}
+                    onChange={field.onChange}
                     placeholder="Enter ticket description"
-                    {...field}
                   />
                 </FormControl>
                 <FormMessage />

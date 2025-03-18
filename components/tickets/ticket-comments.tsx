@@ -3,13 +3,12 @@
 import * as React from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useSession } from "next-auth/react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
+import { RichTextEditor } from "@/components/editor/rich-text-editor";
 
 interface Comment {
   id: string;
@@ -30,7 +29,6 @@ interface TicketCommentsProps {
 }
 
 export function TicketComments({ ticketId, initialComments, status }: TicketCommentsProps) {
-  const { data: session } = useSession();
   const [comments, setComments] = React.useState<Comment[]>(initialComments);
   const [newComment, setNewComment] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
@@ -87,11 +85,10 @@ export function TicketComments({ ticketId, initialComments, status }: TicketComm
           </Alert>
         ) : (
           <form onSubmit={addComment} className="space-y-4">
-            <Textarea
+            <RichTextEditor
+              content={newComment}
+              onChange={setNewComment}
               placeholder="Add a comment..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              disabled={isLoading}
             />
             <Button type="submit" disabled={isLoading}>
               {isLoading ? "Adding..." : "Add Comment"}
@@ -121,7 +118,10 @@ export function TicketComments({ ticketId, initialComments, status }: TicketComm
                     })}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground">{comment.content}</p>
+                <div 
+                  className="text-sm text-muted-foreground prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: comment.content }}
+                />
               </div>
             </div>
           ))}

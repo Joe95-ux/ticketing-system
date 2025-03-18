@@ -46,7 +46,7 @@ export function useCategoryCounts() {
 
     window.addEventListener(TICKET_EVENTS.CREATED, handleTicketCreated);
     return () => window.removeEventListener(TICKET_EVENTS.CREATED, handleTicketCreated);
-  }, []);
+  }, [counts]);
 
   return { counts };
 } 

@@ -12,7 +12,6 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
 import { toast } from "sonner";
 
@@ -36,7 +35,7 @@ export function NotificationsForm() {
     },
   });
 
-  function onSubmit(data: NotificationsFormValues) {
+  function onSubmit() {
     toast.success("Notification preferences updated!");
   }
 

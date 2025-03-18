@@ -19,7 +19,7 @@ export async function POST(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Only admins can assign tickets
+    // Only admins and support can assign tickets
     if (session.user.role !== "ADMIN" && session.user.role !== "SUPPORT") {
       return new NextResponse("Forbidden", { status: 403 });
     }

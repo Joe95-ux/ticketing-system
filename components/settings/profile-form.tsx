@@ -45,7 +45,7 @@ export function ProfileForm() {
     },
   });
 
-  function onSubmit(data: ProfileFormValues) {
+  function onSubmit() {
     toast.success("Profile updated successfully!");
   }
 

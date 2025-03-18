@@ -139,7 +139,7 @@ export function TicketActions({ ticket }: TicketActionsProps) {
         throw new Error(error.error || "Failed to update ticket in database");
       }
 
-      const data = await response.json();
+      // const data = await response.json();
 
       toast.success("Ticket status has been updated successfully.");
       router.refresh();

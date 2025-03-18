@@ -1,128 +1,49 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
-import { TicketActions } from "@/components/tickets/ticket-actions";
-import { TicketComments } from "@/components/tickets/ticket-comments";
-import { TicketBlockchainHistory } from "@/components/tickets/ticket-blockchain-history";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { formatDistanceToNow } from "date-fns";
+import { findTicket } from "@/lib/db-utils";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { ErrorFallback } from "@/components/error-fallback";
+import { TicketDetails } from "@/components/tickets/ticket-details";
 
-type Status = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
-type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-type BadgeVariant = "warning" | "default" | "success" | "secondary" | "destructive" | "outline";
-
-const statusVariants: Record<Status, BadgeVariant> = {
-  OPEN: "warning",
-  IN_PROGRESS: "default",
-  RESOLVED: "success",
-  CLOSED: "secondary",
-};
-
-const priorityVariants: Record<Priority, BadgeVariant> = {
-  LOW: "secondary",
-  MEDIUM: "default",
-  HIGH: "warning",
-  URGENT: "destructive",
-};
-
-interface TicketPageProps {
-  params: {
-    id: string;
-  };
-}
-
-async function getTicket(id: string) {
-  const ticket = await db.ticket.findUnique({
-    where: { id },
-    include: {
-      createdBy: true,
-      assignedTo: true,
-      comments: {
-        include: {
-          user: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-    },
-  });
-
-  return ticket;
-}
-
-export async function generateMetadata(props: TicketPageProps): Promise<Metadata> {
-  const id = props.params.id;
-  
-  const ticket = await db.ticket.findUnique({
-    where: { id },
-    select: {
-      title: true,
-      description: true,
-    },
-  });
-
-  if (!ticket) {
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const id = await Promise.resolve(params.id);
+  try {
+    const ticket = await findTicket(id);
+    if (!ticket) {
+      return {
+        title: "Ticket Not Found",
+        description: "The requested ticket could not be found."
+      };
+    }
     return {
-      title: "Ticket Not Found",
+      title: `Ticket #${ticket.id} - ${ticket.title}`,
+      description: ticket.description || "No description provided"
+    };
+  } catch (error) {
+    return {
+      title: "Error Loading Ticket",
+      description: "An error occurred while loading the ticket."
     };
   }
-
-  return {
-    title: `Ticket - ${ticket.title}`,
-    description: ticket.description,
-  };
 }
 
-export default async function TicketPage(props: TicketPageProps) {
-  const id = props.params.id;
-  const ticket = await getTicket(id);
-
+export default async function TicketPage({ params }: { params: { id: string } }) {
+  const ticket = await findTicket(params.id);
+  
   if (!ticket) {
     notFound();
   }
 
   return (
-    <div className="grid gap-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-semibold tracking-tight">
-              {ticket.title}
-            </h2>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>
-                Created by {ticket.createdBy.name || ticket.createdBy.email}
-              </span>
-              <span>•</span>
-              <span>{formatDistanceToNow(ticket.createdAt)} ago</span>
-            </div>
-          </div>
-          <TicketActions ticket={ticket} />
-        </CardHeader>
-        <CardContent className="grid gap-6">
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={statusVariants[ticket.status as Status]}>{ticket.status}</Badge>
-            <Badge variant={priorityVariants[ticket.priority as Priority]}>{ticket.priority}</Badge>
-            <Badge variant="secondary">{ticket.category}</Badge>
-          </div>
-          <div className="text-sm">{ticket.description}</div>
-          {ticket.assignedTo && (
-            <div className="text-sm text-muted-foreground">
-              Assigned to: {ticket.assignedTo.name || ticket.assignedTo.email}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <TicketComments 
-        ticketId={ticket.id} 
-        initialComments={ticket.comments} 
-        status={ticket.status}
-      />
-
-      <TicketBlockchainHistory ticketId={ticket.id} />
-    </div>
+    <ErrorBoundary
+      fallback={
+        <ErrorFallback
+          message="Error loading ticket details"
+          backPath="/tickets"
+        />
+      }
+    >
+      <TicketDetails ticket={ticket} />
+    </ErrorBoundary>
   );
 }

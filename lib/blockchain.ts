@@ -1,6 +1,11 @@
 import { ethers } from "ethers";
 import TicketTrackerABI from "@/contracts/TicketTracker.json";
 
+interface ProviderRpcError extends Error {
+  code: number;
+  data?: unknown;
+}
+
 export class BlockchainService {
   private provider: ethers.providers.Web3Provider;
   private contract: ethers.Contract;
@@ -34,7 +39,7 @@ export class BlockchainService {
       const accounts = await this.provider.send("eth_requestAccounts", []);
       return accounts[0];
     } catch (error) {
-      if ((error as any).code === 4001) {
+      if ((error as ProviderRpcError).code === 4001) {
         throw new Error("Please connect your MetaMask wallet");
       }
       throw error;
