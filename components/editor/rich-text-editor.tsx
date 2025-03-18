@@ -92,25 +92,35 @@ export function RichTextEditor({
       return;
     }
 
+    const loadingToast = toast.loading('Uploading image...');
+    setIsUploading(true);
+
     try {
-      setIsUploading(true);
-      const loadingToast = toast.loading('Uploading image...');
+      if (!process.env.NEXT_PUBLIC_BLOB_READ_WRITE_TOKEN) {
+        throw new Error('Missing upload configuration');
+      }
 
       // Generate a unique filename
       const filename = `${nanoid()}-${file.name}`;
       const blob = await put(filename, file, {
         access: 'public',
-        token: process.env.NEXT_PUBLIC_BLOB_READ_WRITE_TOKEN!
+        token: process.env.NEXT_PUBLIC_BLOB_READ_WRITE_TOKEN
       });
 
+      if (!blob?.url) {
+        throw new Error('Failed to get upload URL');
+      }
+
       editor?.chain().focus().setImage({ src: blob.url }).run();
-      toast.dismiss(loadingToast);
       toast.success('Image uploaded successfully');
     } catch (error) {
       console.error('Image upload error:', error);
-      toast.error('Failed to upload image');
+      toast.error(error instanceof Error ? error.message : 'Failed to upload image');
     } finally {
+      toast.dismiss(loadingToast);
       setIsUploading(false);
+      // Reset the file input
+      e.target.value = '';
     }
   };
 
