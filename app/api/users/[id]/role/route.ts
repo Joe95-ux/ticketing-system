@@ -7,10 +7,10 @@ import * as z from "zod";
 const updateRoleSchema = z.object({
   role: z.enum(["USER", "SUPPORT", "ADMIN"]),
 });
-
+type paramsType = Promise<{ id: string }>;
 export async function PATCH(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: paramsType }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -19,7 +19,7 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { id } = context.params;
+    const { id } = await context.params;
     const json = await req.json();
     const body = updateRoleSchema.parse(json);
 

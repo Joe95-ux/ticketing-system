@@ -9,9 +9,11 @@ const statusSchema = z.object({
   status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]),
 });
 
+type paramsType = Promise<{ id: string }>;
+
 export async function POST(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: paramsType }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -26,10 +28,11 @@ export async function POST(
 
     const json = await req.json();
     const body = statusSchema.parse(json);
+    const {id} = await context.params;
 
     // Get the ticket and verify it exists
     const ticket = await db.ticket.findUnique({
-      where: { id: context.params.id },
+      where: { id },
       include: {
         createdBy: true,
         assignedTo: true,
@@ -42,7 +45,7 @@ export async function POST(
 
     // Update the ticket status
     const updatedTicket = await db.ticket.update({
-      where: { id: context.params.id },
+      where: { id },
       data: {
         status: body.status,
       },

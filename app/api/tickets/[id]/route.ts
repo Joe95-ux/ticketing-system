@@ -11,9 +11,11 @@ const updateSchema = z.object({
   txHash: z.string().optional(),
 });
 
+type paramsType = Promise<{ id: string }>;
+
 export async function PATCH(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: paramsType }
 ) {
   try {
     const session = await requireAuth();
@@ -32,7 +34,7 @@ export async function PATCH(
     }
 
     const parsed = updateSchema.parse(body);
-    const { id } = context.params;
+    const { id } = await context.params;
 
     // Fetch the current ticket to check permissions
     const ticket = await db.ticket.findUnique({
@@ -77,13 +79,13 @@ export async function PATCH(
 
 export async function GET(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: paramsType }
 ) {
   try {
     const session = await requireAuth();
     if (session instanceof NextResponse) return session;
 
-    const { id } = await Promise.resolve(context.params);
+    const { id } = await context.params;
     const ticket = await db.ticket.findUnique({
       where: { id },
       include: {

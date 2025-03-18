@@ -9,7 +9,9 @@ const commentSchema = z.object({
   content: z.string().min(1),
 });
 
-export async function POST(req: Request, context: { params: { id: string } }) {
+type paramsType = Promise<{ id: string }>;
+
+export async function POST(req: Request, context: { params: paramsType }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -20,7 +22,7 @@ export async function POST(req: Request, context: { params: { id: string } }) {
     const body = commentSchema.parse(json);
 
     // Await the params resolution
-    const { id } = context.params;
+    const { id } = await context.params;
 
     // Get the ticket and verify it exists
     const ticket = await db.ticket.findUnique({
