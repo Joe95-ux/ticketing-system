@@ -5,15 +5,11 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { ErrorFallback } from "@/components/error-fallback";
 import { TicketDetails } from "@/components/tickets/ticket-details";
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
-}
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const id = await Promise.resolve(params.id);
+type paramsType = Promise<{ id: string }>;
+
+export async function generateMetadata(props: {params: paramsType}): Promise<Metadata> {
+  const { id } = await props.params;
   try {
     const ticket = await findTicket(id);
     if (!ticket) {
@@ -34,8 +30,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function TicketPage({ params }: PageProps) {
-  const ticket = await findTicket(params.id);
+export default async function TicketPage(props: { params: paramsType }) {
+  const { id } = await props.params;
+  const ticket = await findTicket(id);
   
   if (!ticket) {
     notFound();

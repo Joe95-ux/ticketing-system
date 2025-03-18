@@ -32,14 +32,12 @@ async function getTicketsByCategory(category: string): Promise<Ticket[]> {
   return tickets as unknown as Ticket[];
 }
 
-export default async function CategoryPage({
-  params,
-}: {
-  params: { category: string };
-}) {
-  // Wait for params to be available
-  const categoryParam = await Promise.resolve(params.category);
-  const category = categoryParam.toUpperCase();
+type paramsType = Promise<{ category: string }>;
+
+export default async function CategoryPage(props: { params: paramsType }) {
+  
+  let {category} = await props.params;
+  category = category.toUpperCase();
   
   if (!Object.keys(categories).includes(category)) {
     notFound();
