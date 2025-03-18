@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +65,31 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
     status?: string;
   }>({});
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Reset search state when dialog closes
+  useEffect(() => {
+    if (!showSearchDialog) {
+      setSearchQuery("");
+      setResults([]);
+      setCategoryCounts({});
+      setActiveFilters({});
+      // Abort any ongoing fetch requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    }
+  }, [showSearchDialog]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Add keyboard shortcut handler
   useEffect(() => {
@@ -88,6 +113,14 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
         return;
       }
 
+      // Abort previous request if it exists
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+
       setIsSearching(true);
       try {
         const params = new URLSearchParams();
@@ -95,31 +128,43 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
         if (activeFilters.category) params.append("category", activeFilters.category);
         if (activeFilters.status) params.append("status", activeFilters.status);
 
-        const response = await fetch(`/api/tickets/search?${params.toString()}`);
+        const response = await fetch(`/api/tickets/search?${params.toString()}`, {
+          signal: abortControllerRef.current.signal
+        });
+        
         if (!response.ok) throw new Error('Search failed');
         const data: SearchResponse = await response.json();
-        setResults(data.tickets);
-        setCategoryCounts(data.categoryCounts);
+        
+        // Only update state if the modal is still open
+        if (showSearchDialog) {
+          setResults(data.tickets);
+          setCategoryCounts(data.categoryCounts);
+        }
       } catch (error) {
-        console.error('Search error:', error);
-        setResults([]);
-        setCategoryCounts({});
+        // Only show errors if they're not from aborting the request
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Search error:', error);
+          setResults([]);
+          setCategoryCounts({});
+        }
       } finally {
-        setIsSearching(false);
+        if (showSearchDialog) {
+          setIsSearching(false);
+        }
       }
     },
-    [activeFilters]
+    [activeFilters, showSearchDialog]
   );
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (searchQuery) {
+      if (searchQuery && showSearchDialog) {
         debouncedSearch(searchQuery);
       }
     }, 300); // 300ms delay
 
     return () => clearTimeout(timer);
-  }, [searchQuery, debouncedSearch]);
+  }, [searchQuery, debouncedSearch, showSearchDialog]);
 
   // Update the input handler to just update the query
   const handleSearch = (query: string) => {
