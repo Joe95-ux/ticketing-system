@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { X } from "lucide-react";
-
+import Image from "next/image";
 interface ContentRendererProps {
   content: string;
   className?: string;
@@ -109,12 +109,13 @@ export function ContentRenderer({ content, className }: ContentRendererProps) {
           <DialogTitle asChild>
             <VisuallyHidden>Image Preview</VisuallyHidden>
           </DialogTitle>
-          <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <DialogClose className="absolute right-4 top-4 rounded-md bg-background/90 opacity-100 lg:opacity-100 transition-opacity hover:bg-background border shadow-sm dark:border-border hidden md:inline-block"
+          >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </DialogClose>
           {expandedImage && (
-            <img
+            <Image
               src={expandedImage}
               alt="Expanded view"
               className="max-w-full max-h-[95vh] object-contain rounded-md"
