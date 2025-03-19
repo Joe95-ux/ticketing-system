@@ -6,7 +6,6 @@ import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { X } from "lucide-react";
-import Image from "next/image";
 interface ContentRendererProps {
   content: string;
   className?: string;
@@ -115,7 +114,7 @@ export function ContentRenderer({ content, className }: ContentRendererProps) {
             <span className="sr-only">Close</span>
           </DialogClose>
           {expandedImage && (
-            <Image
+            <img
               src={expandedImage}
               alt="Expanded view"
               className="max-w-full max-h-[95vh] object-contain rounded-md"
