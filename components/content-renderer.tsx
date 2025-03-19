@@ -19,9 +19,12 @@ export function ContentRenderer({ content, className }: ContentRendererProps) {
   // Process images after render
   useEffect(() => {
     if (!containerRef.current) return;
+    
+    // Capture the current value for cleanup
+    const container = containerRef.current;
 
     const processImages = () => {
-      const images = containerRef.current?.getElementsByTagName("img") || [];
+      const images = container.getElementsByTagName("img") || [];
       Array.from(images).forEach((img) => {
         // Skip if image is already processed
         if (img.parentElement?.classList.contains('image-processed')) return;
@@ -81,7 +84,7 @@ export function ContentRenderer({ content, className }: ContentRendererProps) {
 
     // Setup observer for dynamic content changes
     const observer = new MutationObserver(processImages);
-    observer.observe(containerRef.current, { 
+    observer.observe(container, { 
       childList: true, 
       subtree: true 
     });
@@ -89,12 +92,10 @@ export function ContentRenderer({ content, className }: ContentRendererProps) {
     // Cleanup function
     return () => {
       observer.disconnect();
-      if (containerRef.current) {
-        const buttons = containerRef.current.getElementsByTagName("button");
-        Array.from(buttons).forEach(button => {
-          button.removeEventListener("click", () => {});
-        });
-      }
+      const buttons = container.getElementsByTagName("button");
+      Array.from(buttons).forEach(button => {
+        button.removeEventListener("click", () => {});
+      });
     };
   }, [content]);
 

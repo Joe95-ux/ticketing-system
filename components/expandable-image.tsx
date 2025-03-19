@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import Image from "next/image";
 import { Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,7 @@ export function ExpandableImage({ src, alt, className }: ExpandableImageProps) {
   return (
     <>
       <div className="relative inline-block group">
-        <img
+        <Image
           src={src}
           alt={alt || ""}
           className={cn(
@@ -38,7 +39,7 @@ export function ExpandableImage({ src, alt, className }: ExpandableImageProps) {
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-screen-lg h-[90vh] flex items-center justify-center p-0">
-          <img
+          <Image
             src={src}
             alt={alt || ""}
             className="max-w-full max-h-full object-contain"
