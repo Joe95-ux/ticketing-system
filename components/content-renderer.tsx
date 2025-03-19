@@ -34,12 +34,12 @@ export function ContentRenderer({ content, className }: ContentRendererProps) {
             <img
               src="${src}"
               alt="${alt}"
-              class="max-h-[400px] w-full rounded-md object-contain cursor-pointer"
+              class="max-h-[400px] w-full rounded-md object-cover cursor-pointer"
               style="max-width: 600px;"
             />
           </div>
           <button
-            class="absolute top-3 right-3 p-2 rounded-md bg-background/90 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background border shadow-sm dark:border-border"
+            class="absolute top-3 right-3 p-2 rounded-md bg-background/90 opacity-100 lg:opacity-100 transition-opacity hover:bg-background border shadow-sm dark:border-border hidden md:inline-block"
             aria-label="View full size image"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
