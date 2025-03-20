@@ -202,7 +202,7 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className={cn({"md:hidden": !isHomepage})}
             onClick={onMobileMenuClick}
           >
             <Menu className="h-5 w-5" />

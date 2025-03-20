@@ -5,14 +5,19 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { Ticket, Wrench, MessageCircle} from "lucide-react";
 import {Navbar} from "@/components/navbar";
+import { Sidebar } from "@/components/sidebar";
 import { useState } from "react";
-import Image from "next/image";
 
 export default function HomePage() {
   const { data: session } = useSession();
   const url = session ? "/dashboard" : "/login";
-
   const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+
+  const handleSidebarToggle = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
 
   const features = [
     {
@@ -34,8 +39,20 @@ export default function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      {/* Sidebar */}
+      {isSidebarOpen && (
+        <div
+          onClick={handleSidebarToggle}
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+        ></div>
+      )}
+      <div className={`fixed top-0 left-0 h-screen w-64 transition-transform duration-300 ease-in-out z-50 ${
+           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}>
+        <Sidebar mobileOpen={isMobileOpen} onMobileOpenChange={setIsMobileOpen} />
+      </div>
       {/* Navbar */}
-      <Navbar onMobileMenuClick={() => setIsMobileOpen(!isMobileOpen)} />
+      <Navbar onMobileMenuClick={handleSidebarToggle} />
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20"> {/* Adjusted padding-top for navbar */}
@@ -70,7 +87,7 @@ export default function HomePage() {
           <div className="relative mx-auto max-w-6xl">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl blur-3xl" />
             <div className="relative rounded-xl border bg-card p-8 shadow-lg">
-              <Image
+              <img
                 src="https://images.unsplash.com/photo-1556745757-8d76bdb6984b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
                 alt="Ticket Management System"
                 className="rounded-lg w-full h-auto"
