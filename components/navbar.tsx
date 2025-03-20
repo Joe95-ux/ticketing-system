@@ -213,7 +213,7 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
           <Logo />
           {/* Search bar */}
           {session && (
-            <div className="hidden md:flex flex-1 max-w-lg">
+            <div className={cn("hidden md:flex flex-1 max-w-lg", isHomepage && "ml-auto mr-auto")}>
             <Button
               variant="outline"
               className="w-full justify-start text-muted-foreground h-9 px-3 gap-2"
@@ -234,14 +234,17 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
         {/* Right side buttons */}
         <div className="flex items-center gap-2">
           {/* Mobile search button */}
-          <Button
+          {session && (
+            <Button
             variant="ghost"
             size="icon"
-            className={cn({"md:hidden" : !(isHomepage && session)})}
+            className="md:hidden"
             onClick={() => setShowSearchDialog(true)}
           >
             <Search className="h-5 w-5" />
           </Button>
+          )}
+          
 
           {/* Theme toggle */}
           <ModeToggle />

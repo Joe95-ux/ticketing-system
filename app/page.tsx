@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
-import { Ticket, Wrench, MessageCircle } from "lucide-react";
-import { Navbar } from "@/components/navbar";
-import { Sidebar } from "@/components/sidebar";
+import { Ticket, Wrench, MessageCircle} from "lucide-react";
+import {Navbar} from "@/components/navbar";
 import { useState } from "react";
 import Image from "next/image";
 
@@ -35,9 +34,6 @@ export default function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Sidebar */}
-      <Sidebar mobileOpen={isMobileOpen} onMobileOpenChange={setIsMobileOpen} />
-
       {/* Navbar */}
       <Navbar onMobileMenuClick={() => setIsMobileOpen(!isMobileOpen)} />
 
@@ -75,11 +71,9 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl blur-3xl" />
             <div className="relative rounded-xl border bg-card p-8 shadow-lg">
               <Image
-                src="https://images.unsplash.com/photo-1556745757-8d76bdb6984b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" // Generic ticketing system image
+                src="https://images.unsplash.com/photo-1556745757-8d76bdb6984b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
                 alt="Ticket Management System"
                 className="rounded-lg w-full h-auto"
-                width={1200}
-                height={800}
               />
             </div>
           </div>
