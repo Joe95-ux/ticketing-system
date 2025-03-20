@@ -10,8 +10,7 @@ import {
   Ticket,
   Settings,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
+  PanelRightOpen,
   MessageCircle,
   Wrench,
   CreditCard,
@@ -56,29 +55,27 @@ interface SidebarProps {
 // Update the scrollbar styles
 const scrollbarStyles = `
   [data-scrollbar]::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   [data-scrollbar]::-webkit-scrollbar-track {
-    background: #0F172A;
+    background: transparent;
   }
 
   [data-scrollbar]::-webkit-scrollbar-thumb {
-    background-color: #1E293B;
-    border-radius: 10px;
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
 
   [data-scrollbar]::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground) / 0.4);
+    background-color: hsl(var(--muted-foreground) / 0.5);
   }
 
   [data-scrollbar] {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
-  }
-
-  [data-scrollbar]:hover {
-    scrollbar-color: hsl(var(--muted-foreground) / 0.4) transparent;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
   }
 `;
 
@@ -142,7 +139,7 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
         "flex h-full flex-col bg-card border-r z-30",
         "fixed md:sticky top-0 left-0",
         "w-64 md:w-auto",
-        "transition-all duration-200",
+        "transition-all duration-200 ease-in-out",
         isCollapsed && !isMobile && "md:w-16",
         !mobileOpen && "-translate-x-full md:translate-x-0"
       )}>
@@ -171,15 +168,14 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="h-8 w-8"
           >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
+            <PanelRightOpen className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              isCollapsed && "rotate-180"
+            )} />
           </Button>
         </div>
 
-        <div className="flex-1 overflow-hidden hover:overflow-y-auto transition-all py-4" data-scrollbar>
+        <div className="flex-1 overflow-y-auto transition-all py-4" data-scrollbar>
           <nav className="grid gap-1 px-2">
             {routes.map((route) => (
               <Link
@@ -290,4 +286,4 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
       </div>
     </>
   );
-} 
+}

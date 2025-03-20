@@ -108,7 +108,7 @@ export function ContentRenderer({ content, className }: ContentRendererProps) {
           <DialogTitle asChild>
             <VisuallyHidden>Image Preview</VisuallyHidden>
           </DialogTitle>
-          <DialogClose className="absolute right-4 top-4 rounded-md bg-black text-white opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+          <DialogClose className="absolute right-4 top-4 rounded-sm bg-black text-white opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
