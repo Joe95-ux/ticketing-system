@@ -85,6 +85,7 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { counts: categoryCounts } = useCategoryCounts();
+  const [isInitialized, setInitialized] = useState(false);
 
   // Handle initial state based on screen size
   useEffect(() => {
@@ -92,20 +93,21 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
       
-      if (mobile) {
-        // On mobile: reset collapse state and hide sidebar
-        setIsCollapsed(false);
-        onMobileOpenChange?.(false);
-      } else {
-        // On desktop: show sidebar
-        onMobileOpenChange?.(true);
+      if (!isInitialized) {
+        // Only set initial state once
+        if (mobile) {
+          // On mobile: reset collapse state and hide sidebar
+          setIsCollapsed(false);
+          onMobileOpenChange?.(false);
+        }
+        setInitialized(true);
       }
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [onMobileOpenChange]);
+  }, [onMobileOpenChange, isInitialized, setInitialized]);
 
   const categories = Object.entries(categoryConfig).map(([key, config]) => {
     const IconComponent = {
@@ -166,10 +168,10 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
             variant="ghost"
             size="icon"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-8 w-8"
+            className="h-10 w-10"
           >
             <PanelRightOpen className={cn(
-              "h-5 w-5 transition-transform duration-200",
+              "h-8 w-8 transition-transform duration-200 text-muted-foreground",
               isCollapsed && "rotate-180"
             )} />
           </Button>

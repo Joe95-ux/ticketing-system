@@ -7,11 +7,20 @@ import { Ticket, Wrench, MessageCircle} from "lucide-react";
 import {Navbar} from "@/components/navbar";
 import { Sidebar } from "@/components/sidebar";
 import { useMobile } from "@/hooks/useMobile";
+import { useEffect } from "react";
 
 export default function HomePage() {
   const { data: session } = useSession();
   const url = session ? "/dashboard" : "/login";
-  const { isMobileOpen, setIsMobileOpen } = useMobile();
+  const { isMobileOpen, setIsMobileOpen, isInitialized, setInitialized } = useMobile();
+
+  // Ensure sidebar is closed on initial load
+  useEffect(() => {
+    if (!isInitialized) {
+      setIsMobileOpen(false);
+      setInitialized(true);
+    }
+  }, [isInitialized, setInitialized, setIsMobileOpen]);
 
   const features = [
     {
