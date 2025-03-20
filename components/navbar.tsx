@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Ticket, User, LogOut, Menu, Search, Filter, Loader2, X, LogIn } from "lucide-react";
+import { User, LogOut, Menu, Search, Filter, Loader2, X, LogIn } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
   Dialog,
@@ -24,7 +24,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { categoryConfig } from "@/components/tickets/category-badge";
 import { cn } from "@/lib/utils";
+import Logo from "@/components/logo";
 import { LucideIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 interface SearchResponse {
   tickets: TicketResult[];
@@ -66,6 +68,9 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
   }>({});
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  const pathname = usePathname();
+  const isHomepage = pathname === "/";
 
   // Reset search state when dialog closes
   useEffect(() => {
@@ -205,20 +210,10 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
           </Button>
 
           {/* Logo - only visible on mobile */}
-          <div className="md:hidden flex items-center gap-2 font-bold">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 hover:opacity-75"
-            >
-              <Ticket className="h-5 w-5 dark:text-white text-black" />
-              <span className="font-mono text-xl tracking-tight dark:text-white text-black">
-                TixHub
-              </span>
-            </Link>
-          </div>
-
+          <Logo />
           {/* Search bar */}
-          <div className="hidden md:flex flex-1 max-w-xl">
+          {session && (
+            <div className="hidden md:flex flex-1 max-w-lg">
             <Button
               variant="outline"
               className="w-full justify-start text-muted-foreground h-9 px-3 gap-2"
@@ -232,6 +227,8 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
               </kbd>
             </Button>
           </div>
+
+          )}
         </div>
 
         {/* Right side buttons */}
@@ -240,7 +237,7 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className={cn({"md:hidden" : !(isHomepage && session)})}
             onClick={() => setShowSearchDialog(true)}
           >
             <Search className="h-5 w-5" />
