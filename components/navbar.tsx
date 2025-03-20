@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Ticket, User, LogOut, Menu, Search, Filter, Loader2, X } from "lucide-react";
+import { Ticket, User, LogOut, Menu, Search, Filter, Loader2, X, LogIn } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
   Dialog,
@@ -249,40 +249,60 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
           {/* Theme toggle */}
           <ModeToggle />
 
-          {/* Profile dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative h-8 w-8 rounded-full"
-              >
-                <User className="h-5 w-5" />
+          {/* Show login/signup buttons if not logged in */}
+          {!session && (
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/login">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login
+                </Link>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <div className="flex items-center justify-start gap-2 p-2">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {session?.user?.name}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {session?.user?.email}
-                  </p>
+              <Button size="sm" asChild>
+                <Link href="/register">
+                  Sign Up
+                </Link>
+              </Button>
+            </>
+          )}
+
+          {/* Show profile dropdown if logged in */}
+          {session && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative h-8 w-8 rounded-full"
+                >
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {session?.user?.name}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {session?.user?.email}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <DropdownMenuItem
-                className="text-red-600 dark:text-red-400 cursor-pointer"
-                onClick={() => signOut({ callbackUrl: "/login" })}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem
+                  className="text-red-600 dark:text-red-400 cursor-pointer"
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
+      {/* Search Dialog */}
       <Dialog open={showSearchDialog} onOpenChange={setShowSearchDialog}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
           <DialogHeader>
@@ -432,4 +452,4 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
       </Dialog>
     </header>
   );
-} 
+}
