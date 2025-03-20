@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { Sidebar } from "@/components/sidebar";
 import { Navbar } from "@/components/navbar";
-import { useState } from "react";
+import { useMobile } from "@/hooks/useMobile";
 
 export default function AuthenticatedLayout({
   children,
@@ -11,8 +11,7 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   const { status } = useSession(); 
-
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { isMobileOpen, setIsMobileOpen } = useMobile();
 
   if (status === "loading") {
     return (

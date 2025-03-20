@@ -7,11 +7,11 @@ import { Ticket, Wrench, MessageCircle} from "lucide-react";
 import {Navbar} from "@/components/navbar";
 import { Sidebar } from "@/components/sidebar";
 import { useState } from "react";
-
+import { useMobile } from "@/hooks/useMobile";
 export default function HomePage() {
   const { data: session } = useSession();
   const url = session ? "/dashboard" : "/login";
-  const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false);
+  const { isMobileOpen, setIsMobileOpen } = useMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   const handleSidebarToggle = () => {
@@ -43,7 +43,7 @@ export default function HomePage() {
       {isSidebarOpen && (
         <div
           onClick={handleSidebarToggle}
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black/70 z-40"
         ></div>
       )}
       <div className={`fixed top-0 left-0 h-screen w-64 transition-transform duration-300 ease-in-out z-50 ${
