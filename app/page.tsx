@@ -6,18 +6,12 @@ import { useSession } from "next-auth/react";
 import { Ticket, Wrench, MessageCircle} from "lucide-react";
 import {Navbar} from "@/components/navbar";
 import { Sidebar } from "@/components/sidebar";
-import { useState } from "react";
 import { useMobile } from "@/hooks/useMobile";
+
 export default function HomePage() {
   const { data: session } = useSession();
   const url = session ? "/dashboard" : "/login";
   const { isMobileOpen, setIsMobileOpen } = useMobile();
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-
-  const handleSidebarToggle = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
 
   const features = [
     {
@@ -39,20 +33,21 @@ export default function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Sidebar */}
-      {isSidebarOpen && (
+      {/* Backdrop for mobile sidebar */}
+      {isMobileOpen && (
         <div
-          onClick={handleSidebarToggle}
+          onClick={() => setIsMobileOpen(false)}
           className="fixed inset-0 bg-black/70 z-40"
-        ></div>
+        />
       )}
+      {/* Sidebar with mobile state */}
       <div className={`fixed top-0 left-0 h-screen w-64 transition-transform duration-300 ease-in-out z-50 ${
-           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}>
+        isMobileOpen ? "translate-x-0" : "-translate-x-full"
+      }`}>
         <Sidebar mobileOpen={isMobileOpen} onMobileOpenChange={setIsMobileOpen} />
       </div>
-      {/* Navbar */}
-      <Navbar onMobileMenuClick={handleSidebarToggle} />
+      {/* Navbar with mobile toggle */}
+      <Navbar onMobileMenuClick={() => setIsMobileOpen(!isMobileOpen)} />
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20"> {/* Adjusted padding-top for navbar */}

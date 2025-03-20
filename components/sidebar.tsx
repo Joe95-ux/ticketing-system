@@ -169,7 +169,7 @@ export function Sidebar({ mobileOpen = false, onMobileOpenChange }: SidebarProps
             className="h-8 w-8"
           >
             <PanelRightOpen className={cn(
-              "h-4 w-4 transition-transform duration-200",
+              "h-5 w-5 transition-transform duration-200",
               isCollapsed && "rotate-180"
             )} />
           </Button>

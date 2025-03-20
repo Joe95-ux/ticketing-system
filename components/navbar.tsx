@@ -205,7 +205,7 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
             className={cn({"md:hidden": !isHomepage})}
             onClick={onMobileMenuClick}
           >
-            <Menu className="h-5 w-5" />
+            <Menu size={18} />
             <span className="sr-only">Toggle menu</span>
           </Button>
 

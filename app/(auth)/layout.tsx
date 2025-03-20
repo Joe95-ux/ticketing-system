@@ -18,7 +18,7 @@ export default function AuthLayout({
             className="flex items-center gap-2 text-xl font-semibold"
           >
             <Ticket className="h-6 w-6" />
-            <span>TicketFlow</span>
+            <span>TixHub</span>
           </Link>
           <div className="h-px w-full bg-white/10" />
         </div>
