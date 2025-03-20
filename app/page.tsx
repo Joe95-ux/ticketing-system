@@ -4,8 +4,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { Ticket, Wrench, MessageCircle} from "lucide-react";
-import {Navbar} from "@/components/navbar"; // Import your navbar component
-import Image from "next/image";
+import {Navbar} from "@/components/navbar";
+
 export default function HomePage() {
   const { data: session } = useSession();
   const url = session ? "/dashboard" : "/register";
@@ -66,10 +66,10 @@ export default function HomePage() {
           <div className="relative mx-auto max-w-6xl">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl blur-3xl" />
             <div className="relative rounded-xl border bg-card p-8 shadow-lg">
-              <Image
+              <img
                 src="https://images.unsplash.com/photo-1556745757-8d76bdb6984b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" // Generic ticketing system image
                 alt="Ticket Management System"
-                className="rounded-lg"
+                className="rounded-lg w-full h-auto"
               />
             </div>
           </div>
@@ -109,6 +109,97 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t bg-card mt-16">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Company Info */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Ticket className="h-6 w-6 dark:text-white text-black" />
+                <span className="font-mono text-xl tracking-tight dark:text-white text-black">
+                  TixHub
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Streamline your support workflow with our intuitive ticket management system.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Quick Links</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-primary">
+                    Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/tickets" className="text-sm text-muted-foreground hover:text-primary">
+                    Tickets
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/settings" className="text-sm text-muted-foreground hover:text-primary">
+                    Settings
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Resources</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/docs" className="text-sm text-muted-foreground hover:text-primary">
+                    Documentation
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/support" className="text-sm text-muted-foreground hover:text-primary">
+                    Support
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/blog" className="text-sm text-muted-foreground hover:text-primary">
+                    Blog
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Contact</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary">
+                    Contact Us
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary">
+                    Terms of Service
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
+            © {new Date().getFullYear()} TixHub. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
