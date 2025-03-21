@@ -12,14 +12,31 @@ import {
 import { DatePickerWithRange } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { BarChart, LineChart, PieChart } from "lucide-react";
+import { BarChart as BarChartIcon, LineChart as LineChartIcon, PieChart as PieChartIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+} from "recharts";
 
 interface Metric {
   id: string;
   label: string;
+  unit?: string;
+  formatValue?: (value: number) => string;
 }
 
 interface Dimension {
@@ -31,6 +48,7 @@ interface MetricData {
   id: string;
   label: string;
   data: number[];
+  categories: string[];
 }
 
 interface ReportData {
@@ -42,11 +60,39 @@ interface ReportData {
   };
 }
 
+const CHART_COLORS = ['#0ea5e9', '#f97316', '#8b5cf6', '#ef4444'];
+
+const formatTime = (minutes: number) => {
+  if (minutes < 60) return `${minutes}m`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+};
+
+const formatPercentage = (value: number) => `${value}%`;
+
 const metrics: Metric[] = [
-  { id: "resolution_time", label: "Resolution Time" },
-  { id: "response_time", label: "Response Time" },
-  { id: "satisfaction", label: "Customer Satisfaction" },
-  { id: "ticket_volume", label: "Ticket Volume" },
+  { 
+    id: "resolution_time", 
+    label: "Resolution Time",
+    unit: "minutes",
+    formatValue: formatTime
+  },
+  { 
+    id: "response_time", 
+    label: "Response Time",
+    unit: "minutes",
+    formatValue: formatTime
+  },
+  { 
+    id: "satisfaction", 
+    label: "Customer Satisfaction",
+    unit: "%",
+    formatValue: formatPercentage
+  },
+  { 
+    id: "ticket_volume", 
+    label: "Ticket Volume",
+    formatValue: (value) => value.toString()
+  },
 ];
 
 const dimensions: Dimension[] = [
@@ -55,6 +101,20 @@ const dimensions: Dimension[] = [
   { id: "priority", label: "By Priority" },
   { id: "status", label: "By Status" },
 ];
+
+const categories = {
+  agent: ["John", "Sarah", "Mike", "Emma", "Alex"],
+  category: ["Technical", "Billing", "Feature Request", "Bug", "General"],
+  priority: ["Low", "Medium", "High", "Urgent", "Critical"],
+  status: ["Open", "In Progress", "Pending", "Resolved", "Closed"],
+};
+
+type ChartData = {
+  name: string;
+  [key: string]: string | number;
+};
+
+type TooltipFormatter = (value: number, name: string) => [string, string];
 
 export function CustomReportBuilder() {
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
@@ -78,13 +138,15 @@ export function CustomReportBuilder() {
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     try {
-      // Simulate API call with sample data
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const dimensionCategories = categories[selectedDimension as keyof typeof categories] || [];
       
       const sampleData: ReportData = {
         metrics: selectedMetrics.map(metricId => ({
           id: metricId,
           label: metrics.find(m => m.id === metricId)?.label ?? "",
+          categories: dimensionCategories,
           data: Array.from({ length: 5 }, () => Math.floor(Math.random() * 100)),
         })),
         dimension: dimensions.find(d => d.id === selectedDimension)?.label ?? "",
@@ -99,6 +161,110 @@ export function CustomReportBuilder() {
       console.error('Error generating report:', error);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const renderChart = () => {
+    if (!reportData) return null;
+
+    const chartData: ChartData[] = reportData.metrics[0].categories.map((category, index) => ({
+      name: category,
+      ...reportData.metrics.reduce((acc, metric) => ({
+        ...acc,
+        [metric.label]: metric.data[index],
+      }), {}),
+    }));
+
+    const getMetricFormat = (metricId: string) => {
+      const metric = metrics.find(m => m.id === metricId);
+      return metric?.formatValue || ((value: number) => value.toString());
+    };
+
+    const tooltipFormatter: TooltipFormatter = (value, name) => {
+      const metric = metrics.find(m => m.label === name);
+      const format = metric?.formatValue || ((v: number) => v.toString());
+      return [format(value), name];
+    };
+
+    switch (selectedChart) {
+      case "bar":
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip formatter={tooltipFormatter} />
+              <Legend />
+              {reportData.metrics.map((metric, index) => (
+                <Bar
+                  key={metric.id}
+                  dataKey={metric.label}
+                  fill={CHART_COLORS[index % CHART_COLORS.length]}
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        );
+
+      case "line":
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip formatter={tooltipFormatter} />
+              <Legend />
+              {reportData.metrics.map((metric, index) => (
+                <Line
+                  key={metric.id}
+                  type="monotone"
+                  dataKey={metric.label}
+                  stroke={CHART_COLORS[index % CHART_COLORS.length]}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        );
+
+      case "pie":
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <PieChart>
+              {reportData.metrics.map((metric, metricIndex) => {
+                const format = getMetricFormat(metric.id);
+                return (
+                  <Pie
+                    key={metric.id}
+                    dataKey="value"
+                    nameKey="name"
+                    data={metric.categories.map((category, index) => ({
+                      name: category,
+                      value: metric.data[index],
+                    }))}
+                    cx={`${25 + (metricIndex * 50)}%`}
+                    cy="50%"
+                    outerRadius={80}
+                    label={({ name, value }) => `${name}: ${format(value as number)}`}
+                  >
+                    {metric.data.map((_, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={CHART_COLORS[index % CHART_COLORS.length]} 
+                      />
+                    ))}
+                  </Pie>
+                );
+              })}
+              <Legend />
+              <Tooltip formatter={(value) => [getMetricFormat(reportData.metrics[0].id)(value as number), ""]} />
+            </PieChart>
+          </ResponsiveContainer>
+        );
+
+      default:
+        return null;
     }
   };
 
@@ -166,7 +332,7 @@ export function CustomReportBuilder() {
             className="flex items-center gap-2"
             onClick={() => setSelectedChart("bar")}
           >
-            <BarChart className="h-4 w-4" />
+            <BarChartIcon className="h-4 w-4" />
             Bar Chart
           </Button>
           <Button
@@ -174,7 +340,7 @@ export function CustomReportBuilder() {
             className="flex items-center gap-2"
             onClick={() => setSelectedChart("line")}
           >
-            <LineChart className="h-4 w-4" />
+            <LineChartIcon className="h-4 w-4" />
             Line Chart
           </Button>
           <Button
@@ -182,7 +348,7 @@ export function CustomReportBuilder() {
             className="flex items-center gap-2"
             onClick={() => setSelectedChart("pie")}
           >
-            <PieChart className="h-4 w-4" />
+            <PieChartIcon className="h-4 w-4" />
             Pie Chart
           </Button>
         </div>
@@ -202,19 +368,12 @@ export function CustomReportBuilder() {
       {reportData && (
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Generated Report</h3>
-          <div className="space-y-4">
-            <p><strong>Date Range:</strong> {reportData.dateRange.from} to {reportData.dateRange.to}</p>
-            <p><strong>Dimension:</strong> {reportData.dimension}</p>
-            <div>
-              <strong>Metrics:</strong>
-              <ul className="list-disc list-inside mt-2">
-                {reportData.metrics.map((metric) => (
-                  <li key={metric.id}>
-                    {metric.label}: {metric.data.join(', ')}
-                  </li>
-                ))}
-              </ul>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <p><strong>Date Range:</strong> {reportData.dateRange.from} to {reportData.dateRange.to}</p>
+              <p><strong>Dimension:</strong> {reportData.dimension}</p>
             </div>
+            {renderChart()}
           </div>
         </Card>
       )}
