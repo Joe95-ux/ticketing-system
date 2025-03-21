@@ -15,8 +15,8 @@ import {
 
 interface DatePickerWithRangeProps {
   className?: string;
-  value?: DateRange | undefined;
-  onChange?: (date: DateRange | undefined) => void;
+  value: DateRange | undefined;
+  onChange: (date: DateRange | undefined) => void;
 }
 
 export function DatePickerWithRange({
@@ -26,13 +26,16 @@ export function DatePickerWithRange({
 }: DatePickerWithRangeProps) {
   const [date, setDate] = React.useState<DateRange | undefined>(value);
 
+  // Sync internal state with external value
   React.useEffect(() => {
-    setDate(value);
-  }, [value]);
+    if (value?.from !== date?.from || value?.to !== date?.to) {
+      setDate(value);
+    }
+  }, [value, date]);
 
   const handleSelect = (newDate: DateRange | undefined) => {
     setDate(newDate);
-    onChange?.(newDate);
+    onChange(newDate);
   };
 
   return (

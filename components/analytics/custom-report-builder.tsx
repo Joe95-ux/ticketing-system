@@ -17,14 +17,39 @@ import { DateRange } from "react-day-picker";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 
-const metrics = [
+interface Metric {
+  id: string;
+  label: string;
+}
+
+interface Dimension {
+  id: string;
+  label: string;
+}
+
+interface MetricData {
+  id: string;
+  label: string;
+  data: number[];
+}
+
+interface ReportData {
+  metrics: MetricData[];
+  dimension: string;
+  dateRange: {
+    from: string;
+    to: string;
+  };
+}
+
+const metrics: Metric[] = [
   { id: "resolution_time", label: "Resolution Time" },
   { id: "response_time", label: "Response Time" },
   { id: "satisfaction", label: "Customer Satisfaction" },
   { id: "ticket_volume", label: "Ticket Volume" },
 ];
 
-const dimensions = [
+const dimensions: Dimension[] = [
   { id: "agent", label: "By Agent" },
   { id: "category", label: "By Category" },
   { id: "priority", label: "By Priority" },
@@ -40,7 +65,7 @@ export function CustomReportBuilder() {
     to: new Date(),
   });
   const [isGenerating, setIsGenerating] = useState(false);
-  const [reportData, setReportData] = useState<any>(null);
+  const [reportData, setReportData] = useState<ReportData | null>(null);
 
   const handleReset = () => {
     setSelectedMetrics([]);
@@ -56,13 +81,13 @@ export function CustomReportBuilder() {
       // Simulate API call with sample data
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const sampleData = {
+      const sampleData: ReportData = {
         metrics: selectedMetrics.map(metricId => ({
           id: metricId,
-          label: metrics.find(m => m.id === metricId)?.label,
+          label: metrics.find(m => m.id === metricId)?.label ?? "",
           data: Array.from({ length: 5 }, () => Math.floor(Math.random() * 100)),
         })),
-        dimension: dimensions.find(d => d.id === selectedDimension)?.label,
+        dimension: dimensions.find(d => d.id === selectedDimension)?.label ?? "",
         dateRange: {
           from: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : '',
           to: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : '',
@@ -183,7 +208,7 @@ export function CustomReportBuilder() {
             <div>
               <strong>Metrics:</strong>
               <ul className="list-disc list-inside mt-2">
-                {reportData.metrics.map((metric: any) => (
+                {reportData.metrics.map((metric) => (
                   <li key={metric.id}>
                     {metric.label}: {metric.data.join(', ')}
                   </li>
