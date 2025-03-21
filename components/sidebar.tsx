@@ -16,6 +16,7 @@ import {
   CreditCard,
   Lightbulb,
   Bug,
+  BarChart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +40,11 @@ const routes = [
     label: "Tickets",
     icon: Ticket,
     href: "/tickets",
+  },
+  {
+    label: "Analytics",
+    icon: BarChart,
+    href: "/analytics",
   },
   {
     label: "Settings",
