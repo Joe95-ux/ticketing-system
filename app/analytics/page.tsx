@@ -14,6 +14,7 @@ import { ResolutionTimeChart } from "@/components/analytics/resolution-time-char
 import { CategoryDistribution } from "@/components/analytics/category-distribution";
 import { AgentPerformance } from "@/components/analytics/agent-performance";
 import { ResponseDistribution } from "@/components/analytics/response-distribution";
+import { CustomReportBuilder } from "@/components/analytics/custom-report-builder";
 
 export default function AnalyticsPage() {
   return (
@@ -119,9 +120,7 @@ export default function AnalyticsPage() {
               <CardTitle>Custom Report Builder</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px] flex items-center justify-center border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Report Builder Component Here</p>
-              </div>
+              <CustomReportBuilder />
             </CardContent>
           </Card>
         </TabsContent>

@@ -1,14 +1,8 @@
 "use client";
 
-import { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Sidebar } from "@/components/sidebar";
 import { useMobile } from "@/hooks/useMobile";
-
-export const metadata: Metadata = {
-  title: "Analytics | TixHub",
-  description: "View detailed analytics and metrics for your support system.",
-};
 
 interface AnalyticsLayoutProps {
   children: React.ReactNode;
