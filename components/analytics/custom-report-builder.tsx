@@ -13,6 +13,9 @@ import { DatePickerWithRange } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { BarChart, LineChart, PieChart } from "lucide-react";
+import { DateRange } from "react-day-picker";
+import { Card } from "@/components/ui/card";
+import { format } from "date-fns";
 
 const metrics = [
   { id: "resolution_time", label: "Resolution Time" },
@@ -32,6 +35,47 @@ export function CustomReportBuilder() {
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
   const [selectedDimension, setSelectedDimension] = useState<string>("");
   const [selectedChart, setSelectedChart] = useState<string>("bar");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: new Date(),
+  });
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [reportData, setReportData] = useState<any>(null);
+
+  const handleReset = () => {
+    setSelectedMetrics([]);
+    setSelectedDimension("");
+    setSelectedChart("bar");
+    setDateRange({ from: new Date(), to: new Date() });
+    setReportData(null);
+  };
+
+  const handleGenerateReport = async () => {
+    setIsGenerating(true);
+    try {
+      // Simulate API call with sample data
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const sampleData = {
+        metrics: selectedMetrics.map(metricId => ({
+          id: metricId,
+          label: metrics.find(m => m.id === metricId)?.label,
+          data: Array.from({ length: 5 }, () => Math.floor(Math.random() * 100)),
+        })),
+        dimension: dimensions.find(d => d.id === selectedDimension)?.label,
+        dateRange: {
+          from: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : '',
+          to: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : '',
+        },
+      };
+
+      setReportData(sampleData);
+    } catch (error) {
+      console.error('Error generating report:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -39,7 +83,11 @@ export function CustomReportBuilder() {
         <div className="space-y-4">
           <div>
             <Label>Date Range</Label>
-            <DatePickerWithRange className="w-full" />
+            <DatePickerWithRange 
+              className="w-full" 
+              value={dateRange}
+              onChange={setDateRange}
+            />
           </div>
           <div>
             <Label>Group By</Label>
@@ -116,14 +164,35 @@ export function CustomReportBuilder() {
       </div>
 
       <div className="flex justify-end gap-4">
-        <Button variant="outline">Reset</Button>
+        <Button variant="outline" onClick={handleReset}>Reset</Button>
         <Button
-          disabled={selectedMetrics.length === 0 || !selectedDimension}
+          disabled={selectedMetrics.length === 0 || !selectedDimension || !dateRange?.from || !dateRange?.to || isGenerating}
+          onClick={handleGenerateReport}
           className="flex items-center gap-2"
         >
-          Generate Report
+          {isGenerating ? "Generating..." : "Generate Report"}
         </Button>
       </div>
+
+      {reportData && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Generated Report</h3>
+          <div className="space-y-4">
+            <p><strong>Date Range:</strong> {reportData.dateRange.from} to {reportData.dateRange.to}</p>
+            <p><strong>Dimension:</strong> {reportData.dimension}</p>
+            <div>
+              <strong>Metrics:</strong>
+              <ul className="list-disc list-inside mt-2">
+                {reportData.metrics.map((metric: any) => (
+                  <li key={metric.id}>
+                    {metric.label}: {metric.data.join(', ')}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 } 
