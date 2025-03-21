@@ -5,13 +5,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Clock, 
   Users, 
-  BarChart, 
-  LineChart,
   ArrowUp,
   ArrowDown,
   CheckCircle2,
   Clock4
 } from "lucide-react";
+import { ResolutionTimeChart } from "@/components/analytics/resolution-time-chart";
+import { CategoryDistribution } from "@/components/analytics/category-distribution";
+import { AgentPerformance } from "@/components/analytics/agent-performance";
+import { ResponseDistribution } from "@/components/analytics/response-distribution";
 
 export default function AnalyticsPage() {
   return (
@@ -101,50 +103,14 @@ export default function AnalyticsPage() {
             </Card>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4">
-              <CardHeader>
-                <CardTitle>Resolution Time Trends</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[200px] flex items-center justify-center border-2 border-dashed rounded-lg">
-                  <p className="text-muted-foreground">Line Chart Component Here</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="col-span-3">
-              <CardHeader>
-                <CardTitle>Ticket Categories</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[200px] flex items-center justify-center border-2 border-dashed rounded-lg">
-                  <p className="text-muted-foreground">Pie Chart Component Here</p>
-                </div>
-              </CardContent>
-            </Card>
+            <ResolutionTimeChart />
+            <CategoryDistribution />
           </div>
         </TabsContent>
         <TabsContent value="performance" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4">
-              <CardHeader>
-                <CardTitle>Agent Performance Metrics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg">
-                  <p className="text-muted-foreground">Performance Table Component Here</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="col-span-3">
-              <CardHeader>
-                <CardTitle>Response Time Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg">
-                  <p className="text-muted-foreground">Bar Chart Component Here</p>
-                </div>
-              </CardContent>
-            </Card>
+            <AgentPerformance />
+            <ResponseDistribution />
           </div>
         </TabsContent>
         <TabsContent value="reports" className="space-y-4">
