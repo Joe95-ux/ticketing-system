@@ -234,21 +234,23 @@ export function CustomReportBuilder() {
             <PieChart>
               {reportData.metrics.map((metric, metricIndex) => {
                 const format = getMetricFormat(metric.id);
+                const pieData = metric.categories.map((category, index) => ({
+                  name: `${category} (${metric.label})`,
+                  value: metric.data[index],
+                  category: category
+                }));
                 return (
                   <Pie
                     key={metric.id}
+                    data={pieData}
                     dataKey="value"
                     nameKey="name"
-                    data={metric.categories.map((category, index) => ({
-                      name: category,
-                      value: metric.data[index],
-                    }))}
                     cx={`${25 + (metricIndex * 50)}%`}
                     cy="50%"
                     outerRadius={80}
                     label={({ name, value }) => `${name}: ${format(value as number)}`}
                   >
-                    {metric.data.map((_, index) => (
+                    {pieData.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`} 
                         fill={CHART_COLORS[index % CHART_COLORS.length]} 
@@ -257,8 +259,12 @@ export function CustomReportBuilder() {
                   </Pie>
                 );
               })}
+              <Tooltip formatter={(value, name) => {
+                const metric = reportData.metrics[0];
+                const format = getMetricFormat(metric.id);
+                return [format(value as number), String(name).split(" (")[0]];
+              }} />
               <Legend />
-              <Tooltip formatter={(value) => [getMetricFormat(reportData.metrics[0].id)(value as number), ""]} />
             </PieChart>
           </ResponsiveContainer>
         );
