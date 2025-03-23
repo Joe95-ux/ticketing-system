@@ -77,7 +77,7 @@ export function EditTicketForm({ ticket, isOpen, onClose }: EditTicketFormProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Ticket</DialogTitle>
         </DialogHeader>
@@ -94,14 +94,16 @@ export function EditTicketForm({ ticket, isOpen, onClose }: EditTicketFormProps)
           
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <RichTextEditor
-              content={formData.description}
-              onChange={(content) => setFormData({ ...formData, description: content })}
-              placeholder="Describe the issue..."
-            />
+            <div className="max-h-[40vh] overflow-y-auto border rounded-md">
+              <RichTextEditor
+                content={formData.description}
+                onChange={(content) => setFormData({ ...formData, description: content })}
+                placeholder="Describe the issue..."
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
               <Select
@@ -159,7 +161,7 @@ export function EditTicketForm({ ticket, isOpen, onClose }: EditTicketFormProps)
             </div>
           </div>
 
-          <div className="flex justify-end gap-4">
+          <div className="flex justify-end gap-4 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
