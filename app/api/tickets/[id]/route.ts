@@ -1,78 +1,117 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { db } from "@/lib/db";
 import * as z from "zod";
-import { requireAuth, canManageTicket } from "@/lib/auth-helpers";
-import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/auth-helpers";
+import { authOptions } from "@/lib/auth";
 
 const updateSchema = z.object({
   status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]).optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   category: z.enum(["GENERAL", "TECHNICAL", "BILLING", "FEATURE_REQUEST", "BUG"]).optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
   txHash: z.string().optional(),
 });
 
 type paramsType = Promise<{ id: string }>;
 
-export async function PATCH(
-  req: Request,
-  context: { params: paramsType }
+export async function DELETE(
+  request: Request,
+  { params }: { params:paramsType }
 ) {
   try {
-    const session = await requireAuth();
-    if (session instanceof NextResponse) return session;
-
-    let body;
-    try {
-      const text = await req.text();
-      body = text ? JSON.parse(text) : {};
-    } catch (e) {
-      return new NextResponse("Invalid JSON", { status: 400 });
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    if (!Object.keys(body).length) {
-      return new NextResponse("At least one field must be provided", { status: 400 });
-    }
-
-    const parsed = updateSchema.parse(body);
-    const { id } = await context.params;
-
-    // Fetch the current ticket to check permissions
+    const { id } = await params;
     const ticket = await db.ticket.findUnique({
       where: { id },
-      include: { createdBy: true },
+      include: { 
+        assignedTo: true,
+        createdBy: true
+      },
     });
 
     if (!ticket) {
       return new NextResponse("Ticket not found", { status: 404 });
     }
 
-    // Check if user has permission to update
-    if (!canManageTicket(session, ticket)) {
+    // Check if user has permission to delete the ticket
+    const canDelete = 
+      session.user.role === "ADMIN" || 
+      ticket.createdBy.id === session.user.id ||
+      ticket.assignedTo?.id === session.user.id;
+
+    if (!canDelete) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    // Update the ticket in the database
-    const updatedTicket = await db.ticket.update({
+    await db.ticket.delete({
+      where: { id},
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("[TICKET_DELETE]", error);
+    return new NextResponse("Internal error", { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: paramsType}
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const json = await request.json();
+    
+    // Validate request data against schema
+    const validationResult = updateSchema.safeParse(json);
+    if (!validationResult.success) {
+      return new NextResponse(
+        JSON.stringify({ error: "Invalid request data", details: validationResult.error }),
+        { status: 400 }
+      );
+    }
+
+    const { id } = await params;
+    const ticket = await db.ticket.findUnique({
       where: { id },
-      data: {
-        ...(parsed.status && { status: parsed.status }),
-        ...(parsed.txHash && { txHash: parsed.txHash }),
-      },
-      include: {
-        createdBy: true,
+      include: { 
         assignedTo: true,
+        createdBy: true
       },
     });
 
-    // Revalidate the ticket page
-    revalidatePath(`/tickets/${id}`);
+    if (!ticket) {
+      return new NextResponse("Ticket not found", { status: 404 });
+    }
+
+    // Check if user has permission to edit the ticket
+    const canEdit = 
+      session.user.role === "ADMIN" || 
+      ticket.createdBy.id === session.user.id ||
+      ticket.assignedTo?.id === session.user.id;
+
+    if (!canEdit) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    const updatedTicket = await db.ticket.update({
+      where: { id },
+      data: validationResult.data,
+    });
 
     return NextResponse.json(updatedTicket);
   } catch (error) {
     console.error("[TICKET_UPDATE]", error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
     return new NextResponse("Internal error", { status: 500 });
   }
 }
