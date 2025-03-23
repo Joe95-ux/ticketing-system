@@ -17,6 +17,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -29,14 +30,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { MoreVertical, UserPlus, Wallet } from "lucide-react";
+import { MoreVertical, UserPlus, Wallet, Pencil, Trash2 } from "lucide-react";
 import { useBlockchain } from "@/contexts/blockchain-context";
+import { useState } from "react";
 
 interface TicketActionsProps {
   ticket: Ticket;
+  canEdit: boolean;
+  canDelete: boolean;
+  onEdit: () => void;
 }
 
-export function TicketActions({ ticket }: TicketActionsProps) {
+export function TicketActions({ ticket, canEdit, canDelete, onEdit }: TicketActionsProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const { isConnected, connect, createTicket, updateTicketStatus } = useBlockchain();
@@ -44,6 +49,8 @@ export function TicketActions({ ticket }: TicketActionsProps) {
   const [showAssignDialog, setShowAssignDialog] = React.useState(false);
   const [supportUsers, setSupportUsers] = React.useState<User[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = React.useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch support users when dialog opens
   const fetchSupportUsers = React.useCallback(async () => {
@@ -141,7 +148,7 @@ export function TicketActions({ ticket }: TicketActionsProps) {
 
       // const data = await response.json();
 
-      toast.success("Ticket status has been updated successfully.");
+      toast.success("Ticket status has been updated successfully");
       router.refresh();
     } catch (error) {
       console.error("Status update error:", error);
@@ -174,7 +181,7 @@ export function TicketActions({ ticket }: TicketActionsProps) {
         throw new Error(data.error || "Failed to assign ticket");
       }
 
-      toast.success("Ticket has been assigned successfully.");
+      toast.success("Ticket has been assigned successfully");
       setShowAssignDialog(false);
       router.refresh();
     } catch (error) {
@@ -182,6 +189,29 @@ export function TicketActions({ ticket }: TicketActionsProps) {
       toast.error(error instanceof Error ? error.message : "Failed to assign ticket");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/tickets/${ticket.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete ticket');
+      }
+
+      toast.success("Ticket has been deleted successfully");
+      
+      // Refresh the page or update the ticket list
+      window.location.reload();
+    } catch (error) {
+      toast.error("Failed to delete the ticket. Please try again.");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -301,6 +331,57 @@ export function TicketActions({ ticket }: TicketActionsProps) {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+      <div className="flex gap-2">
+        {canEdit && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+            onClick={onEdit}
+          >
+            <Pencil className="h-4 w-4" />
+            Edit
+          </Button>
+        )}
+        
+        {canDelete && (
+          <Button
+            variant="destructive"
+            size="sm"
+            className="flex items-center gap-2"
+            onClick={() => setIsDeleteDialogOpen(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </Button>
+        )}
+      </div>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Ticket</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this ticket? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
