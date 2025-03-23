@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,6 +37,7 @@ interface EditTicketFormProps {
 }
 
 export function EditTicketForm({ ticket, isOpen, onClose }: EditTicketFormProps) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: ticket.title,
@@ -64,8 +66,8 @@ export function EditTicketForm({ ticket, isOpen, onClose }: EditTicketFormProps)
 
       toast.success("Ticket has been updated successfully");
       onClose();
-      // Refresh the page or update the ticket list
-      window.location.reload();
+      // Refresh the data using Next.js router
+      router.refresh();
     } catch (error) {
       toast.error("Failed to update the ticket. Please try again.");
     } finally {

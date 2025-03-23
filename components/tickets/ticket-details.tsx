@@ -8,6 +8,9 @@ import { TicketComments } from "@/components/tickets/ticket-comments";
 import { TicketBlockchainHistory } from "@/components/tickets/ticket-blockchain-history";
 import { ContentRenderer } from "@/components/content-renderer";
 import type { Ticket } from "@/types";
+import { useState } from "react";
+import { EditTicketForm } from "./edit-ticket-form";
+import { useSession } from "next-auth/react";
 
 type Status = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
@@ -32,6 +35,11 @@ interface TicketDetailsProps {
 }
 
 export function TicketDetails({ ticket }: TicketDetailsProps) {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const { data: session } = useSession();
+
+  const isCreator = session?.user?.id === ticket.createdBy.id;
+
   return (
     <div className="grid gap-6">
       <Card>
@@ -49,7 +57,12 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
             </div>
           </div>
           <div className="w-full sm:w-auto">
-            <TicketActions ticket={ticket} />
+            <TicketActions 
+              ticket={ticket} 
+              canEdit={isCreator}
+              canDelete={isCreator}
+              onEdit={() => setIsEditModalOpen(true)}
+            />
           </div>
         </CardHeader>
         <CardContent className="grid gap-6">
@@ -76,6 +89,12 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
       />
 
       <TicketBlockchainHistory ticketId={ticket.id} />
+
+      <EditTicketForm
+        ticket={ticket}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+      />
     </div>
   );
 } 

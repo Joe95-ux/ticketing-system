@@ -205,8 +205,9 @@ export function TicketActions({ ticket, canEdit, canDelete, onEdit }: TicketActi
 
       toast.success("Ticket has been deleted successfully");
       
-      // Refresh the page or update the ticket list
-      window.location.reload();
+      // Navigate to tickets list and refresh the data
+      router.push('/tickets');
+      router.refresh();
     } catch (error) {
       toast.error("Failed to delete the ticket. Please try again.");
     } finally {
@@ -329,33 +330,28 @@ export function TicketActions({ ticket, canEdit, canDelete, onEdit }: TicketActi
               Mark as Closed
             </DropdownMenuItem>
           )}
+          <DropdownMenuSeparator />
+          {canEdit && (
+            <DropdownMenuItem
+              onClick={onEdit}
+              disabled={isLoading}
+            >
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit Ticket
+            </DropdownMenuItem>
+          )}
+          {canDelete && (
+            <DropdownMenuItem
+              onClick={() => setIsDeleteDialogOpen(true)}
+              disabled={isLoading}
+              className="text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Ticket
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
-      <div className="flex gap-2">
-        {canEdit && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={onEdit}
-          >
-            <Pencil className="h-4 w-4" />
-            Edit
-          </Button>
-        )}
-        
-        {canDelete && (
-          <Button
-            variant="destructive"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={() => setIsDeleteDialogOpen(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </Button>
-        )}
-      </div>
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
