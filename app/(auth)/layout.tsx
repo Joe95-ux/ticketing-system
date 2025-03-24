@@ -20,7 +20,7 @@ export default function AuthLayout({
             <Ticket className="h-6 w-6" />
             <span>TixHub</span>
           </Link>
-          <div className="h-px w-full bg-white/10" />
+          <div className="h-px w-full bg-white/20" />
         </div>
 
         {/* Content */}
