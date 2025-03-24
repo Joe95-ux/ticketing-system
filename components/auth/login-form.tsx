@@ -111,7 +111,7 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button className="w-full" type="submit" disabled={isLoading}>
+        <Button className="w-full bg-primary text-white hover:bg-primary/70" type="submit" disabled={isLoading}>
           {isLoading ? (
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

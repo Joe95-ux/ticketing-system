@@ -6,6 +6,8 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import { ClientProviders } from "@/providers/client-providers";
 import NexTopLoader from "nextjs-toploader";
+import { CreateTicketFAB } from "@/components/create-ticket-fab";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export default async function RootLayout({
@@ -25,8 +27,11 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ClientProviders session={session}>{children}</ClientProviders>
-          <Toaster richColors closeButton position="top-right" />
+          <ClientProviders session={session}>
+            {children}
+            <CreateTicketFAB />
+            <Toaster richColors closeButton position="top-right" />
+          </ClientProviders>
         </ThemeProvider>
       </body>
     </html>
