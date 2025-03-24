@@ -17,7 +17,7 @@ export default function LoginPage() {
       <LoginForm />
       <p className="text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="underline hover:text-primary">
+        <Link href="/register" className="underline hover:underline">
           Sign up
         </Link>
       </p>

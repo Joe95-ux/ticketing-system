@@ -109,7 +109,7 @@ export default function RegisterPage() {
 
   return (
     <div className="w-full max-w-[350px]">
-      <div className="mb-8 space-y-2 text-center">
+      <div className="mb-8 space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
         <p className="text-sm text-muted-foreground">
           Enter your information to get started
@@ -177,7 +177,7 @@ export default function RegisterPage() {
         </Form>
         <div className="text-center text-sm">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link href="/login" className="font-medium text-muted-foreground hover:underline">
             Sign in
           </Link>
         </div>
