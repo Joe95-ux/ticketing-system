@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
-import Image from "next/image";
 
 export function MetaMaskPrompt() {
   const [isOpen, setIsOpen] = React.useState(true);
@@ -22,32 +21,32 @@ export function MetaMaskPrompt() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[425px] p-6">
+      <DialogContent className="sm:max-w-[400px] p-6">
         <DialogHeader className="space-y-4">
           <div className="mx-auto w-16 h-16 relative">
-            <Image
+            <img
               src="/metamask-fox.svg"
               alt="MetaMask Logo"
-              fill
-              className="object-contain"
-              priority
+              className="w-full h-full object-contain"
             />
           </div>
-          <DialogTitle className="text-xl text-center">Install MetaMask</DialogTitle>
+          <DialogTitle className="text-xl text-center">
+            Install MetaMask
+          </DialogTitle>
           <DialogDescription className="text-center text-base leading-6">
-            To use blockchain features, you need to install MetaMask, a secure wallet
-            and gateway to blockchain apps.
+            To use blockchain features, you need to install MetaMask, a secure
+            wallet and gateway to blockchain apps.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col sm:flex-row gap-3 mt-6">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setIsOpen(false)}
             className="w-full sm:w-auto"
           >
             Not Now
           </Button>
-          <Button 
+          <Button
             onClick={handleInstall}
             className="w-full sm:w-auto bg-[#F6851B] hover:bg-[#E2761B] text-white"
           >
@@ -58,4 +57,4 @@ export function MetaMaskPrompt() {
       </DialogContent>
     </Dialog>
   );
-} 
+}
