@@ -39,9 +39,7 @@ export default async function UsersPage() {
             Manage user roles and permissions for the ticketing system.
           </p>
         </div>
-        <AddUserForm onSuccess={() => {
-          // Page will refresh to show new data
-        }} />
+        <AddUserForm />
       </div>
       <UserRoleManager users={users} />
     </div>

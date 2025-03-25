@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,11 +19,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-interface AddUserFormProps {
-  onSuccess?: () => void;
-}
-
-export function AddUserForm({ onSuccess }: AddUserFormProps) {
+export function AddUserForm() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -50,7 +48,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
       toast.success("User created successfully");
       setIsOpen(false);
       setFormData({ email: "", role: "USER" });
-      onSuccess?.();
+      router.refresh();
     } catch (error) {
       toast.error("Failed to create user");
       console.error("Error creating user:", error);
