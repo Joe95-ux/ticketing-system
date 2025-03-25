@@ -21,7 +21,7 @@ export function MetaMaskPrompt() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[400px] p-6">
+      <DialogContent className="sm:max-w-[425px] p-6">
         <DialogHeader className="space-y-4">
           <div className="mx-auto w-16 h-16 relative">
             <img

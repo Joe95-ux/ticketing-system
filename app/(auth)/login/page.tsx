@@ -6,7 +6,7 @@ import { LoginForm } from "@/components/auth/login-form";
 export default function LoginPage() {
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
+      <div className="mb-8 space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">
           Welcome back
         </h1>
@@ -17,7 +17,7 @@ export default function LoginPage() {
       <LoginForm />
       <p className="text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="underline hover:underline">
+        <Link href="/register" className="hover:underline">
           Sign up
         </Link>
       </p>

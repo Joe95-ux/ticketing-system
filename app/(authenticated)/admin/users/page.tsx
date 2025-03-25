@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { UserRoleManager } from "@/components/admin/user-role-manager";
+import { AddUserForm } from "@/components/admin/add-user-form";
 
 export const metadata: Metadata = {
   title: "User Management",
@@ -31,11 +32,16 @@ export default async function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">User Management</h1>
-        <p className="text-muted-foreground">
-          Manage user roles and permissions for the ticketing system.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">User Management</h1>
+          <p className="text-muted-foreground">
+            Manage user roles and permissions for the ticketing system.
+          </p>
+        </div>
+        <AddUserForm onSuccess={() => {
+          // Page will refresh to show new data
+        }} />
       </div>
       <UserRoleManager users={users} />
     </div>

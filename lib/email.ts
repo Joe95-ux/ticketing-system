@@ -2,19 +2,28 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-type EmailTemplate = 'ticket-created' | 'ticket-assigned' | 'ticket-updated' | 'ticket-resolved';
+type EmailTemplate = 'ticket-created' | 'ticket-assigned' | 'ticket-updated' | 'ticket-resolved' | 'welcome-user';
 
 interface TicketEmailProps {
-  ticketId: string;
-  ticketTitle: string;
-  recipientEmail: string;
+  ticketId?: string;
+  ticketTitle?: string;
+  recipientEmail?: string;
   recipientName?: string | null;
   assigneeName?: string | null;
   updaterName?: string | null;
   comment?: string;
+  email?: string;
+  password?: string;
 }
 
-const templates = {
+interface WelcomeEmailProps {
+  email: string;
+  password: string;
+}
+
+const templates: {
+  [K in EmailTemplate]: (props: EmailProps[K]) => { subject: string; html: string }
+} = {
   'ticket-created': (props: TicketEmailProps) => ({
     subject: `Ticket #${props.ticketId} - Received`,
     html: `
@@ -60,12 +69,32 @@ const templates = {
       <a href="${process.env.NEXT_PUBLIC_APP_URL}/tickets/${props.ticketId}" style="display: inline-block; background-color: #0070f3; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">View Ticket</a>
       <p>If you feel this ticket was not fully resolved, you can create a new ticket referencing this one.</p>
     `
+  }),
+
+  'welcome-user': (props: WelcomeEmailProps) => ({
+    subject: "Welcome to TixHub - Your Account Details",
+    html: `
+      <h1>Welcome to TixHub</h1>
+      <p>Your account has been created successfully. Here are your login credentials:</p>
+      <p><strong>Email:</strong> ${props.email}</p>
+      <p><strong>Password:</strong> ${props.password}</p>
+      <p>Please change your password after your first login.</p>
+      <p>Best regards,<br>TixHub Team</p>
+    `
   })
 };
 
-export async function sendTicketEmail(
-  template: EmailTemplate,
-  props: TicketEmailProps
+type EmailProps = {
+  'ticket-created': TicketEmailProps;
+  'ticket-assigned': TicketEmailProps;
+  'ticket-updated': TicketEmailProps;
+  'ticket-resolved': TicketEmailProps;
+  'welcome-user': WelcomeEmailProps;
+}
+
+export async function sendTicketEmail<T extends EmailTemplate>(
+  template: T,
+  props: EmailProps[T]
 ) {
   if (!process.env.RESEND_API_KEY) {
     console.error('RESEND_API_KEY is not configured');
@@ -73,14 +102,23 @@ export async function sendTicketEmail(
   }
 
   try {
-    const { subject, html } = templates[template](props);
+    const emailTemplate = templates[template] as (props: EmailProps[T]) => { subject: string; html: string };
+    const { subject, html } = emailTemplate(props);
     
     // Fire and forget - don't await or throw errors
     Promise.resolve().then(async () => {
       try {
+        const toEmail = template === 'welcome-user' 
+          ? (props as WelcomeEmailProps).email 
+          : (props as TicketEmailProps).recipientEmail || '';
+
+        if (!toEmail) {
+          throw new Error('No recipient email provided');
+        }
+
         const result = await resend.emails.send({
-          from: "Ticketing System <onboarding@resend.dev>",
-          to: "ogorktabi@gmail.com",
+          from: "TixHub <onboarding@resend.dev>",
+          to: toEmail,
           subject,
           html
         });
