@@ -42,7 +42,8 @@ export function AddUserForm() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create user");
+        const error = await response.text();
+        throw new Error(error);
       }
 
       toast.success("User created successfully");
@@ -50,7 +51,7 @@ export function AddUserForm() {
       setFormData({ email: "", role: "USER" });
       router.refresh();
     } catch (error) {
-      toast.error("Failed to create user");
+      toast.error(error instanceof Error ? error.message : "Failed to create user");
       console.error("Error creating user:", error);
     } finally {
       setIsLoading(false);

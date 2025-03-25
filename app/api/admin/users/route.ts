@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session || session.user.role !== "ADMIN") {
-      return new NextResponse("Unauthorized", { status: 403 });
+      return new NextResponse("Unauthorized: Only admins can create new users", { status: 403 });
     }
 
     const json = await req.json();
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
-      return new NextResponse("User already exists", { status: 400 });
+      return new NextResponse("A user with this email already exists", { status: 400 });
     }
 
     // Generate a random password
@@ -60,11 +60,13 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Error creating user:", error);
+    if (error instanceof z.ZodError) {
+      const errors = error.errors.map(err => `${err.path}: ${err.message}`).join(", ");
+      return new NextResponse(`Invalid data: ${errors}`, { status: 400 });
+    }
     return new NextResponse(
-      error instanceof z.ZodError
-        ? "Invalid request data"
-        : "Internal server error",
-      { status: error instanceof z.ZodError ? 400 : 500 }
+      error instanceof Error ? error.message : "Internal server error",
+      { status: 500 }
     );
   }
 } 
