@@ -12,11 +12,13 @@ interface TicketEmailProps {
   assigneeName?: string | null;
   updaterName?: string | null;
   comment?: string;
+  name?: string;
   email?: string;
   password?: string;
 }
 
 interface WelcomeEmailProps {
+  name: string,
   email: string;
   password: string;
 }

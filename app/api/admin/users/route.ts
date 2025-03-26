@@ -8,6 +8,7 @@ import { generatePassword } from "@/lib/utils";
 import { sendTicketEmail } from "@/lib/email";
 
 const createUserSchema = z.object({
+  name: z.string().min(3, "Name must be atleast 3 characters long"),
   email: z.string().email(),
   role: z.enum(["ADMIN", "SUPPORT", "USER"]),
 });
@@ -39,6 +40,7 @@ export async function POST(req: Request) {
     // Create the user
     const user = await db.user.create({
       data: {
+        name: body.name,
         email: body.email,
         password: hashedPassword,
         role: body.role,
@@ -47,6 +49,7 @@ export async function POST(req: Request) {
 
     // Send welcome email with credentials
     await sendTicketEmail('welcome-user', {
+      name: body.name,
       email: body.email,
       password: password,
     });
@@ -54,6 +57,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       user: {
         id: user.id,
+        name: user.name,
         email: user.email,
         role: user.role,
       },

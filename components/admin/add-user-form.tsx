@@ -24,6 +24,7 @@ export function AddUserForm() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     role: "USER",
   });
@@ -48,7 +49,7 @@ export function AddUserForm() {
 
       toast.success("User created successfully");
       setIsOpen(false);
-      setFormData({ email: "", role: "USER" });
+      setFormData({ name: "", email: "", role: "USER" });
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to create user");
@@ -68,6 +69,22 @@ export function AddUserForm() {
           <DialogTitle>Add New User</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+            <label htmlFor="name" className="text-sm font-medium">
+              Name
+            </label>
+            <Input
+              id="name"
+              type="name"
+              className="mt-2"
+              placeholder="John Doe"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              required
+            />
+          </div>
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">
               Email
@@ -75,6 +92,7 @@ export function AddUserForm() {
             <Input
               id="email"
               type="email"
+              className="mt-2"
               placeholder="user@example.com"
               value={formData.email}
               onChange={(e) =>
@@ -84,7 +102,7 @@ export function AddUserForm() {
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="role" className="text-sm font-medium">
+            <label htmlFor="role" className="text-sm font-medium mb-2">
               Role
             </label>
             <Select
