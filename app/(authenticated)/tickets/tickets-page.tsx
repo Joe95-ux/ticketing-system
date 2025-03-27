@@ -28,22 +28,23 @@ export function TicketsPageContent() {
   });
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // Skip SSR
 
     const fetchTickets = async () => {
       try {
         setIsLoading(true);
         setTickets([]);
 
-        const url = new URL("/api/tickets", window.location.href);
-        if (selectedCategory) url.searchParams.set("category", selectedCategory);
-        url.searchParams.set("page", String(pagination.page));
-        url.searchParams.set("limit", String(pagination.limit));
+        const params = new URLSearchParams({
+          page: String(pagination.page),
+          limit: String(pagination.limit),
+        });
 
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch tickets");
-        
-        const data = await res.json();
+        if (selectedCategory) params.set("category", selectedCategory);
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/tickets?${params.toString()}`);
+
+        if (!response.ok) throw new Error("Failed to fetch");
+        const data = await response.json();
         setTickets(data.tickets);
         setPagination(data.pagination);
       } catch (error) {
@@ -58,7 +59,7 @@ export function TicketsPageContent() {
   }, [selectedCategory, pagination.page, pagination.limit]);
 
   const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
+    setPagination((prev) => ({ ...prev, page: newPage }));
   };
 
   return (
