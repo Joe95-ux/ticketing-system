@@ -1,12 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { TicketList } from "@/components/tickets/ticket-list";
 import { CategoryFilter } from "@/components/tickets/category-filter";
-import Link from "next/link";
 import { Ticket } from "@/types";
-import { useState, useEffect } from "react";
 import {
   Pagination,
   PaginationContent,
@@ -16,50 +16,38 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-interface PaginationInfo {
-  total: number;
-  pages: number;
-  page: number;
-  limit: number;
-}
-
 export function TicketsPageContent() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [pagination, setPagination] = useState<PaginationInfo>({
+  const [pagination, setPagination] = useState({
     total: 0,
     pages: 1,
     page: 1,
     limit: 10,
   });
 
-  // Fetch tickets when category or page changes
   useEffect(() => {
+    if (typeof window === "undefined") return; // Skip SSR
+
     const fetchTickets = async () => {
       try {
         setIsLoading(true);
-        // Clear tickets before fetching new ones
         setTickets([]);
+
+        const url = new URL("/api/tickets", window.location.href);
+        if (selectedCategory) url.searchParams.set("category", selectedCategory);
+        url.searchParams.set("page", String(pagination.page));
+        url.searchParams.set("limit", String(pagination.limit));
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch tickets");
         
-        const url = new URL("/api/tickets", window.location.origin);
-        if (selectedCategory) {
-          url.searchParams.set("category", selectedCategory);
-        }
-        url.searchParams.set("page", pagination.page.toString());
-        url.searchParams.set("limit", pagination.limit.toString());
-        
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error("Failed to fetch tickets");
-        }
-        
-        const data = await response.json();
+        const data = await res.json();
         setTickets(data.tickets);
         setPagination(data.pagination);
       } catch (error) {
         console.error("Error fetching tickets:", error);
-        // Clear tickets on error
         setTickets([]);
       } finally {
         setIsLoading(false);
@@ -73,12 +61,6 @@ export function TicketsPageContent() {
     setPagination(prev => ({ ...prev, page: newPage }));
   };
 
-  const handleCategoryChange = (category: string | null) => {
-    setSelectedCategory(category);
-    // Reset to page 1 when category changes
-    setPagination(prev => ({ ...prev, page: 1 }));
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -90,51 +72,37 @@ export function TicketsPageContent() {
           </Link>
         </Button>
       </div>
-      
+
       <CategoryFilter
         selectedCategory={selectedCategory}
-        onCategoryChange={handleCategoryChange}
+        onCategoryChange={setSelectedCategory}
       />
-      
+
       <TicketList tickets={tickets} isLoading={isLoading} />
 
       {pagination.pages > 1 && !isLoading && (
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (pagination.page > 1) {
-                    handlePageChange(pagination.page - 1);
-                  }
-                }}
+              <PaginationPrevious
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page <= 1}
               />
             </PaginationItem>
-            {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((page) => (
-              <PaginationItem key={page}>
+            {Array.from({ length: pagination.pages }, (_, i) => (
+              <PaginationItem key={i + 1}>
                 <PaginationLink
-                  href="#"
-                  isActive={page === pagination.page}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePageChange(page);
-                  }}
+                  isActive={i + 1 === pagination.page}
+                  onClick={() => handlePageChange(i + 1)}
                 >
-                  {page}
+                  {i + 1}
                 </PaginationLink>
               </PaginationItem>
             ))}
             <PaginationItem>
-              <PaginationNext 
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (pagination.page < pagination.pages) {
-                    handlePageChange(pagination.page + 1);
-                  }
-                }}
+              <PaginationNext
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.pages}
               />
             </PaginationItem>
           </PaginationContent>
@@ -142,4 +110,4 @@ export function TicketsPageContent() {
       )}
     </div>
   );
-} 
+}
