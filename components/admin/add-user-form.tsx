@@ -21,8 +21,8 @@ import { toast } from "sonner";
 
 export function AddUserForm() {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -48,7 +48,7 @@ export function AddUserForm() {
       }
 
       toast.success("User created successfully");
-      setIsOpen(false);
+      setShowDialog(false);
       setFormData({ name: "", email: "", role: "USER" });
       router.refresh();
     } catch (error) {
@@ -60,22 +60,22 @@ export function AddUserForm() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={showDialog} onOpenChange={setShowDialog}>
       <DialogTrigger asChild>
-        <Button>Add User</Button>
+        <Button onClick={() => setShowDialog(true)}>Add User</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add New User</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
+          <div className="space-y-2">
             <label htmlFor="name" className="text-sm font-medium">
               Name
             </label>
             <Input
               id="name"
-              type="name"
+              type="text"
               className="mt-2"
               placeholder="John Doe"
               value={formData.name}
