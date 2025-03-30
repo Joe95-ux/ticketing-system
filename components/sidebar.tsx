@@ -17,6 +17,7 @@ import {
   Lightbulb,
   Bug,
   BarChart,
+  Book,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +41,11 @@ const routes = [
     label: "Tickets",
     icon: Ticket,
     href: "/tickets",
+  },
+  {
+    label: "Knowledge Base",
+    icon: Book,
+    href: "/knowledge-base",
   },
   {
     label: "Analytics",
