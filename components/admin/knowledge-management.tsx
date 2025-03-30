@@ -27,6 +27,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RichTextEditor } from "@/components/editor/rich-text-editor";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Article {
   id: string;
@@ -245,63 +252,42 @@ export function KnowledgeManagement({ categories }: KnowledgeManagementProps) {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showNewArticle} onOpenChange={setShowNewArticle}>
+        <Dialog open={showNewArticle} onOpenChange={(open) => {
+          setShowNewArticle(open);
+          if (!open) resetArticleForm();
+        }}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Add Article
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Article</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateArticle} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Title</label>
-                <Input
-                  value={articleForm.title}
-                  onChange={(e) =>
-                    setArticleForm({ ...articleForm, title: e.target.value })
+                <label className="text-sm font-medium">Category</label>
+                <Select
+                  value={articleForm.categoryId}
+                  onValueChange={(value) =>
+                    setArticleForm({ ...articleForm, categoryId: value })
                   }
-                  placeholder="How to create a ticket"
                   required
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Excerpt</label>
-                <Textarea
-                  value={articleForm.excerpt}
-                  onChange={(e) =>
-                    setArticleForm({ ...articleForm, excerpt: e.target.value })
-                  }
-                  placeholder="A brief guide on creating and managing tickets"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Content</label>
-                <RichTextEditor
-                  content={articleForm.content}
-                  onChange={(value) =>
-                    setArticleForm({ ...articleForm, content: value })
-                  }
-                  placeholder="Write your article content here..."
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating..." : "Create Article"}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showEditArticle} onOpenChange={setShowEditArticle}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Edit Article</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleEditArticle} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Title</label>
                 <Input
@@ -335,7 +321,87 @@ export function KnowledgeManagement({ categories }: KnowledgeManagementProps) {
                 />
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowEditArticle(false)}>
+                <Button variant="outline" onClick={() => {
+                  setShowNewArticle(false);
+                  resetArticleForm();
+                }}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Creating..." : "Create Article"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showEditArticle} onOpenChange={(open) => {
+          setShowEditArticle(open);
+          if (!open) resetArticleForm();
+        }}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Article</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleEditArticle} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Category</label>
+                <Select
+                  value={articleForm.categoryId}
+                  onValueChange={(value) =>
+                    setArticleForm({ ...articleForm, categoryId: value })
+                  }
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Title</label>
+                <Input
+                  value={articleForm.title}
+                  onChange={(e) =>
+                    setArticleForm({ ...articleForm, title: e.target.value })
+                  }
+                  placeholder="How to create a ticket"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Excerpt</label>
+                <Textarea
+                  value={articleForm.excerpt}
+                  onChange={(e) =>
+                    setArticleForm({ ...articleForm, excerpt: e.target.value })
+                  }
+                  placeholder="A brief guide on creating and managing tickets"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Content</label>
+                <RichTextEditor
+                  content={articleForm.content}
+                  onChange={(value) =>
+                    setArticleForm({ ...articleForm, content: value })
+                  }
+                  placeholder="Write your article content here..."
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => {
+                  setShowEditArticle(false);
+                  resetArticleForm();
+                }}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isLoading}>
@@ -357,7 +423,12 @@ export function KnowledgeManagement({ categories }: KnowledgeManagementProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    setArticleForm((prev) => ({ ...prev, categoryId: category.id }));
+                    setArticleForm({
+                      title: "",
+                      excerpt: "",
+                      content: "",
+                      categoryId: category.id
+                    });
                     setShowNewArticle(true);
                   }}
                 >
