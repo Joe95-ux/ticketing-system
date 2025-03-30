@@ -10,7 +10,8 @@
     "lint": "next lint",
     "db:seed": "node --loader ts-node/esm prisma/seed.ts",
     "make-admin": "node --loader ts-node/esm scripts/make-admin.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "seed": "node --loader ts-node/esm scripts/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.8.0",
