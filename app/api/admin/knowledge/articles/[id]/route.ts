@@ -12,9 +12,11 @@ const updateArticleSchema = z.object({
   categoryId: z.string().min(1),
 });
 
+type ParamType = Promise<{id: string}>;
+
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: ParamType }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -41,10 +43,11 @@ export async function PATCH(
     if (!category) {
       return new NextResponse("Category not found", { status: 404 });
     }
+    const {id} = await params;
 
     // Update the article
     const article = await db.knowledgeArticle.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title: body.title,
         slug,
@@ -67,7 +70,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: ParamType}
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -75,10 +78,10 @@ export async function DELETE(
     if (!session?.user || session.user.role !== "ADMIN") {
       return new NextResponse("Unauthorized", { status: 403 });
     }
-
+    const {id} = await params;
     // Delete the article
     await db.knowledgeArticle.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return new NextResponse(null, { status: 204 });

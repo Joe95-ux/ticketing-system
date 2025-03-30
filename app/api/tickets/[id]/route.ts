@@ -147,6 +147,7 @@ export async function GET(
 
     return NextResponse.json(ticket);
   } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
