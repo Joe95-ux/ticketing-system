@@ -17,7 +17,7 @@ interface Article {
 interface Category {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   articles: Article[];
 }
 

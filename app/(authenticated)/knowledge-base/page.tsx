@@ -7,7 +7,8 @@ import { KnowledgeBaseContent } from "@/components/knowledge-base/knowledge-base
 
 export const metadata: Metadata = {
   title: "Knowledge Base",
-  description: "Find answers to common questions and learn how to use our system effectively",
+  description:
+    "Find answers to common questions and learn how to use our system effectively",
 };
 
 export default async function KnowledgeBasePage() {
@@ -28,12 +29,12 @@ export default async function KnowledgeBasePage() {
           updatedAt: true,
         },
         orderBy: {
-          updatedAt: 'desc',
+          updatedAt: "desc",
         },
       },
     },
     orderBy: {
-      name: 'asc',
+      name: "asc",
     },
   });
 
@@ -43,7 +44,8 @@ export default async function KnowledgeBasePage() {
         <div>
           <h1 className="text-3xl font-bold">Knowledge Base</h1>
           <p className="text-muted-foreground mt-2">
-            Find answers to common questions and learn how to use our system effectively
+            Find answers to common questions and learn how to use our system
+            effectively
           </p>
         </div>
 
@@ -51,4 +53,4 @@ export default async function KnowledgeBasePage() {
       </div>
     </div>
   );
-} 
+}
