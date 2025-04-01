@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: TicketPageProps): Promise<Met
 }
 
 function TicketContent({ ticket }: { ticket: TicketWithRelations }) {
-  useRealtimeTicket(ticket.id);
+  useRealtimeTicket(ticket.id, ticket);
   return <TicketDetails ticket={ticket} />;
 }
 

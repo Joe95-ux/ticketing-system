@@ -92,7 +92,7 @@ export async function PATCH(
       },
     });
 
-    // Send email notification
+    // Send email notification for status changes
     if (status && ticket.createdBy.email) {
       await sendTicketEmail("ticket-updated", {
         ticketId: ticket.id,
@@ -103,13 +103,41 @@ export async function PATCH(
       });
     }
 
-    // Send real-time update
-    await pusherServer.trigger(`ticket-${ticket.id}`, "ticket:update", {
-      ticketId: ticket.id,
-      status: ticket.status,
-      updatedBy: session.user.name || session.user.email || "Support Team",
-      timestamp: new Date().toISOString(),
-    });
+    // Send real-time updates for each change
+    const updaterName = session.user.name || session.user.email || "Support Team";
+
+    if (status) {
+      await pusherServer.trigger(`ticket-${ticket.id}`, "ticket:update", {
+        ticketId: ticket.id,
+        status: ticket.status,
+        updatedBy: updaterName,
+        timestamp: new Date().toISOString(),
+        type: "status",
+      });
+    }
+
+    if (priority) {
+      await pusherServer.trigger(`ticket-${ticket.id}`, "ticket:update", {
+        ticketId: ticket.id,
+        priority: ticket.priority,
+        updatedBy: updaterName,
+        timestamp: new Date().toISOString(),
+        type: "priority",
+      });
+    }
+
+    if (assignedToId) {
+      await pusherServer.trigger(`ticket-${ticket.id}`, "ticket:update", {
+        ticketId: ticket.id,
+        assignedTo: ticket.assignedTo ? {
+          name: ticket.assignedTo.name,
+          email: ticket.assignedTo.email,
+        } : null,
+        updatedBy: updaterName,
+        timestamp: new Date().toISOString(),
+        type: "assignment",
+      });
+    }
 
     return NextResponse.json(ticket);
   } catch (error) {
