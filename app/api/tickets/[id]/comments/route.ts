@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sendTicketEmail } from "@/lib/email";
 import * as z from "zod";
+import { pusherServer } from "@/lib/pusher";
 
 const commentSchema = z.object({
   content: z.string().min(1),
@@ -69,6 +70,15 @@ export async function POST(req: Request, context: { params: paramsType }) {
       include: {
         user: true,
       },
+    });
+
+    // Send real-time update
+    await pusherServer.trigger(`ticket-${id}`, "ticket:comment", {
+      ticketId: id,
+      commentId: comment.id,
+      content: comment.content,
+      createdBy: comment.user.name || comment.user.email || "Unknown User",
+      timestamp: comment.createdAt.toISOString(),
     });
 
     // Determine who needs to be notified

@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import * as z from "zod";
 import { requireAuth } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
+import { pusherServer } from "@/lib/pusher";
+import { sendTicketEmail } from "@/lib/email";
 
 const updateSchema = z.object({
   status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]).optional(),
@@ -11,6 +13,7 @@ const updateSchema = z.object({
   category: z.enum(["GENERAL", "TECHNICAL", "BILLING", "FEATURE_REQUEST", "BUG"]).optional(),
   title: z.string().optional(),
   description: z.string().optional(),
+  assignedToId: z.string().optional(),
   txHash: z.string().optional(),
 });
 
@@ -18,7 +21,7 @@ type paramsType = Promise<{ id: string }>;
 
 export async function DELETE(
   request: Request,
-  { params }: { params:paramsType }
+  { params }: { params: paramsType }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -29,7 +32,7 @@ export async function DELETE(
     const { id } = await params;
     const ticket = await db.ticket.findUnique({
       where: { id },
-      include: { 
+      include: {
         assignedTo: true,
         createdBy: true
       },
@@ -40,8 +43,8 @@ export async function DELETE(
     }
 
     // Check if user has permission to delete the ticket
-    const canDelete = 
-      session.user.role === "ADMIN" || 
+    const canDelete =
+      session.user.role === "ADMIN" ||
       ticket.createdBy.id === session.user.id ||
       ticket.assignedTo?.id === session.user.id;
 
@@ -50,7 +53,7 @@ export async function DELETE(
     }
 
     await db.ticket.delete({
-      where: { id},
+      where: { id },
     });
 
     return new NextResponse(null, { status: 204 });
@@ -61,58 +64,60 @@ export async function DELETE(
 }
 
 export async function PATCH(
-  request: Request,
-  { params }: { params: paramsType}
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+
+    if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const json = await request.json();
-    
-    // Validate request data against schema
-    const validationResult = updateSchema.safeParse(json);
-    if (!validationResult.success) {
-      return new NextResponse(
-        JSON.stringify({ error: "Invalid request data", details: validationResult.error }),
-        { status: 400 }
-      );
-    }
+    const values = await req.json();
+    const { status, assignedToId, priority } = updateSchema.parse(values);
 
-    const { id } = await params;
-    const ticket = await db.ticket.findUnique({
-      where: { id },
-      include: { 
+    const ticket = await db.ticket.update({
+      where: {
+        id: params.id,
+      },
+      data: {
+        ...(status && { status }),
+        ...(assignedToId && { assignedToId }),
+        ...(priority && { priority }),
+      },
+      include: {
         assignedTo: true,
-        createdBy: true
+        createdBy: true,
       },
     });
 
-    if (!ticket) {
-      return new NextResponse("Ticket not found", { status: 404 });
+    // Send email notification
+    if (status && ticket.createdBy.email) {
+      await sendTicketEmail("ticket-updated", {
+        ticketId: ticket.id,
+        ticketTitle: ticket.title,
+        recipientEmail: ticket.createdBy.email,
+        recipientName: ticket.createdBy.name,
+        updaterName: session.user.name,
+      });
     }
 
-    // Check if user has permission to edit the ticket
-    const canEdit = 
-      session.user.role === "ADMIN" || 
-      ticket.createdBy.id === session.user.id ||
-      ticket.assignedTo?.id === session.user.id;
-
-    if (!canEdit) {
-      return new NextResponse("Forbidden", { status: 403 });
-    }
-
-    const updatedTicket = await db.ticket.update({
-      where: { id },
-      data: validationResult.data,
+    // Send real-time update
+    await pusherServer.trigger(`ticket-${ticket.id}`, "ticket:update", {
+      ticketId: ticket.id,
+      status: ticket.status,
+      updatedBy: session.user.name || session.user.email || "Support Team",
+      timestamp: new Date().toISOString(),
     });
 
-    return NextResponse.json(updatedTicket);
+    return NextResponse.json(ticket);
   } catch (error) {
-    console.error("[TICKET_UPDATE]", error);
-    return new NextResponse("Internal error", { status: 500 });
+    if (error instanceof z.ZodError) {
+      return new NextResponse(JSON.stringify(error.issues), { status: 422 });
+    }
+
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
