@@ -19,6 +19,16 @@ const updateSchema = z.object({
 
 type paramsType = Promise<{ id: string }>;
 
+const handleError = (error: unknown, context: string) => {
+  console.error(`[TICKET_${context}]`, error);
+  
+  if (error instanceof z.ZodError) {
+    return new NextResponse(JSON.stringify(error.issues), { status: 422 });
+  }
+  
+  return new NextResponse("Internal Server Error", { status: 500 });
+};
+
 export async function DELETE(
   request: Request,
   { params }: { params: paramsType }
@@ -58,8 +68,7 @@ export async function DELETE(
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("[TICKET_DELETE]", error);
-    return new NextResponse("Internal error", { status: 500 });
+    return handleError(error, "DELETE");
   }
 }
 
@@ -141,11 +150,7 @@ export async function PATCH(
 
     return NextResponse.json(ticket);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return new NextResponse(JSON.stringify(error.issues), { status: 422 });
-    }
-
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return handleError(error, "PATCH");
   }
 }
 
@@ -181,9 +186,6 @@ export async function GET(
     return NextResponse.json(ticket);
   } catch (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return handleError(error, "GET");
   }
 } 
