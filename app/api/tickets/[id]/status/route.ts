@@ -14,7 +14,7 @@ type paramsType = Promise<{ id: string }>;
 export async function POST(
   req: Request,
   context: { params: paramsType }
-) {
+): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
