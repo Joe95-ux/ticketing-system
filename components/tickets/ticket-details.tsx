@@ -7,10 +7,11 @@ import { TicketActions } from "@/components/tickets/ticket-actions";
 import { TicketComments } from "@/components/tickets/ticket-comments";
 import { TicketBlockchainHistory } from "@/components/tickets/ticket-blockchain-history";
 import { ContentRenderer } from "@/components/content-renderer";
-import type { Ticket } from "@/types";
+import type { Ticket, ActivityLog, User } from "@/types";
 import { useState } from "react";
 import { EditTicketForm } from "./edit-ticket-form";
 import { useSession } from "next-auth/react";
+import { ActivityFeed } from "./activity-feed";
 
 type Status = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
@@ -31,7 +32,11 @@ const priorityVariants: Record<Priority, BadgeVariant> = {
 };
 
 interface TicketDetailsProps {
-  ticket: Ticket;
+  ticket: Ticket & {
+    activityLogs: (ActivityLog & {
+      user: Pick<User, "name" | "email">;
+    })[];
+  };
 }
 
 export function TicketDetails({ ticket }: TicketDetailsProps) {
@@ -41,55 +46,61 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
   const isCreator = session?.user?.id === ticket.createdBy.id;
 
   return (
-    <div className="grid gap-6">
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
-          <div className="space-y-1">
-            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight break-words">
-              {ticket.title}
-            </h2>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <span>
-                Created by {ticket.createdBy.name || ticket.createdBy.email}
-              </span>
-              <span>•</span>
-              <span>{formatDistanceToNow(ticket.createdAt)} ago</span>
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+      <div className="space-y-6 md:col-span-3">
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
+            <div className="space-y-1">
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight break-words">
+                {ticket.title}
+              </h2>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <span>
+                  Created by {ticket.createdBy.name || ticket.createdBy.email}
+                </span>
+                <span>•</span>
+                <span>{formatDistanceToNow(ticket.createdAt)} ago</span>
+              </div>
             </div>
-          </div>
-          <div className="w-full sm:w-auto">
-            <TicketActions 
-              ticket={ticket} 
-              canEdit={isCreator}
-              canDelete={isCreator}
-              onEdit={() => setIsEditModalOpen(true)}
-            />
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-6">
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={statusVariants[ticket.status]}>{ticket.status}</Badge>
-            <Badge variant={priorityVariants[ticket.priority]}>{ticket.priority}</Badge>
-            <Badge variant="secondary">{ticket.category}</Badge>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            <ContentRenderer content={ticket.description} />
-          </div>
-          {ticket.assignedTo && (
+            <div className="w-full sm:w-auto">
+              <TicketActions 
+                ticket={ticket} 
+                canEdit={isCreator}
+                canDelete={isCreator}
+                onEdit={() => setIsEditModalOpen(true)}
+              />
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-6">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={statusVariants[ticket.status]}>{ticket.status}</Badge>
+              <Badge variant={priorityVariants[ticket.priority]}>{ticket.priority}</Badge>
+              <Badge variant="secondary">{ticket.category}</Badge>
+            </div>
             <div className="text-sm text-muted-foreground">
-              Assigned to: {ticket.assignedTo.name || ticket.assignedTo.email}
+              <ContentRenderer content={ticket.description} />
             </div>
-          )}
-        </CardContent>
-      </Card>
+            {ticket.assignedTo && (
+              <div className="text-sm text-muted-foreground">
+                Assigned to: {ticket.assignedTo.name || ticket.assignedTo.email}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <TicketComments 
-        ticketId={ticket.id} 
-        initialComments={[]} 
-        status={ticket.status}
-      />
+        <TicketComments 
+          ticketId={ticket.id} 
+          initialComments={[]} 
+          status={ticket.status}
+        />
 
-      <TicketBlockchainHistory ticketId={ticket.id} />
+        <TicketBlockchainHistory ticketId={ticket.id} />
 
+        <div className="rounded-lg border p-4">
+          <h2 className="mb-4 text-lg font-medium">Activity</h2>
+          <ActivityFeed activities={ticket.activityLogs} />
+        </div>
+      </div>
       <EditTicketForm
         ticket={ticket}
         isOpen={isEditModalOpen}

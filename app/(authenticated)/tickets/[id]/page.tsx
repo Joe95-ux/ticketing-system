@@ -7,7 +7,7 @@ import { ErrorFallback } from "@/components/error-fallback";
 import { TicketDetails } from "@/components/tickets/ticket-details";
 import { useRealtimeTicket } from "@/hooks/use-realtime-ticket";
 import { Suspense } from "react";
-import type { Ticket, User, Comment } from "@prisma/client";
+import type { Ticket, User, Comment, ActivityLog } from "@prisma/client";
 
 interface TicketPageProps {
   params: {
@@ -19,6 +19,9 @@ interface TicketWithRelations extends Ticket {
   createdBy: User;
   assignedTo: User | null;
   comments: (Comment & { user: User })[];
+  activityLogs: (ActivityLog & {
+    user: Pick<User, "name" | "email">;
+  })[];
 }
 
 export async function generateMetadata({ params }: TicketPageProps): Promise<Metadata> {
@@ -71,6 +74,19 @@ export default async function TicketPage({ params }: TicketPageProps) {
       comments: {
         include: {
           user: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+      activityLogs: {
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
         },
         orderBy: {
           createdAt: "desc",

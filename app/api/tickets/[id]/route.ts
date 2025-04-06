@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
 import { pusherServer } from "@/lib/pusher";
 import { sendTicketEmail } from "@/lib/email";
+import { logActivity } from "@/lib/activity-logger";
 
 const updateSchema = z.object({
   status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]).optional(),
@@ -78,79 +79,133 @@ export async function PATCH(
 ) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const values = await req.json();
-    const { status, assignedToId, priority } = updateSchema.parse(values);
+    const body = await req.json();
+    const { status, priority, assignedId } = updateSchema.parse(body);
 
-    const ticket = await db.ticket.update({
-      where: {
-        id: params.id,
-      },
-      data: {
-        ...(status && { status }),
-        ...(assignedToId && { assignedToId }),
-        ...(priority && { priority }),
-      },
+    const ticket = await db.ticket.findUnique({
+      where: { id: params.id },
       include: {
-        assignedTo: true,
         createdBy: true,
+        assignedTo: true,
       },
     });
 
-    // Send email notification for status changes
-    if (status && ticket.createdBy.email) {
-      await sendTicketEmail("ticket-updated", {
-        ticketId: ticket.id,
-        ticketTitle: ticket.title,
-        recipientEmail: ticket.createdBy.email,
-        recipientName: ticket.createdBy.name,
-        updaterName: session.user.name,
+    if (!ticket) {
+      return new NextResponse("Ticket not found", { status: 404 });
+    }
+
+    // Update the ticket
+    const updatedTicket = await db.ticket.update({
+      where: { id: params.id },
+      data: {
+        ...(status && { status }),
+        ...(priority && { priority }),
+        ...(assignedId !== undefined && { assignedId }),
+      },
+      include: {
+        assignedTo: true,
+      },
+    });
+
+    // Log status change
+    if (status && status !== ticket.status) {
+      await logActivity({
+        action: status === "RESOLVED" ? "resolved_ticket" :
+               status === "CLOSED" ? "closed_ticket" :
+               status === "OPEN" && ticket.status !== "OPEN" ? "reopened_ticket" :
+               "changed_status",
+        userId: session.user.id,
+        ticketId: params.id,
+        details: {
+          previousStatus: ticket.status,
+          newStatus: status,
+        },
       });
     }
 
-    // Send real-time updates for each change
-    const updaterName = session.user.name || session.user.email || "Support Team";
+    // Log priority change
+    if (priority && priority !== ticket.priority) {
+      await logActivity({
+        action: "changed_priority",
+        userId: session.user.id,
+        ticketId: params.id,
+        details: {
+          previousPriority: ticket.priority,
+          newPriority: priority,
+        },
+      });
+    }
 
+    // Log assignment change
+    if (assignedId !== undefined && assignedId !== ticket.assignedId) {
+      await logActivity({
+        action: "assigned_ticket",
+        userId: session.user.id,
+        ticketId: params.id,
+        details: {
+          previousAssignee: ticket.assignedTo?.name || ticket.assignedTo?.email || "Unassigned",
+          assignedTo: updatedTicket.assignedTo?.name || updatedTicket.assignedTo?.email || "Unassigned",
+        },
+      });
+    }
+
+    // Send real-time updates
     if (status) {
-      await pusherServer.trigger(`ticket-${ticket.id}`, "ticket:update", {
-        ticketId: ticket.id,
-        status: ticket.status,
-        updatedBy: updaterName,
+      await pusherServer.trigger(`ticket-${params.id}`, "ticket:update", {
+        ticketId: params.id,
+        updatedBy: session.user.name || session.user.email,
         timestamp: new Date().toISOString(),
-        type: "status",
+        status,
       });
     }
 
     if (priority) {
-      await pusherServer.trigger(`ticket-${ticket.id}`, "ticket:update", {
-        ticketId: ticket.id,
-        priority: ticket.priority,
-        updatedBy: updaterName,
+      await pusherServer.trigger(`ticket-${params.id}`, "ticket:update", {
+        ticketId: params.id,
+        updatedBy: session.user.name || session.user.email,
         timestamp: new Date().toISOString(),
-        type: "priority",
+        priority,
       });
     }
 
-    if (assignedToId) {
-      await pusherServer.trigger(`ticket-${ticket.id}`, "ticket:update", {
-        ticketId: ticket.id,
-        assignedTo: ticket.assignedTo ? {
-          name: ticket.assignedTo.name,
-          email: ticket.assignedTo.email,
-        } : null,
-        updatedBy: updaterName,
+    if (assignedId !== undefined) {
+      await pusherServer.trigger(`ticket-${params.id}`, "ticket:update", {
+        ticketId: params.id,
+        updatedBy: session.user.name || session.user.email,
         timestamp: new Date().toISOString(),
-        type: "assignment",
+        assignedTo: updatedTicket.assignedTo?.name || updatedTicket.assignedTo?.email || "Unassigned",
       });
     }
 
-    return NextResponse.json(ticket);
+    // Send email notifications
+    const notifyUser = ticket.createdBy.id !== session.user.id ? ticket.createdBy :
+                      updatedTicket.assignedTo && updatedTicket.assignedTo.id !== session.user.id ? updatedTicket.assignedTo :
+                      null;
+
+    if (notifyUser) {
+      await sendTicketEmail("ticket-updated", {
+        ticketId: ticket.id,
+        ticketTitle: ticket.title,
+        recipientEmail: notifyUser.email!,
+        recipientName: notifyUser.name,
+        updaterName: session.user.name || session.user.email,
+        status: status || undefined,
+        priority: priority || undefined,
+        assignedTo: updatedTicket.assignedTo?.name || undefined,
+      });
+    }
+
+    return NextResponse.json(updatedTicket);
   } catch (error) {
-    return handleError(error, "PATCH");
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.issues }, { status: 400 });
+    }
+    console.error("[TICKET_PATCH]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }
 
