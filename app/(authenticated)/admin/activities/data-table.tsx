@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Download } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -58,38 +59,85 @@ export function DataTable<TData, TValue>({
     },
   });
 
+  const handleExport = () => {
+    // Get filtered and sorted data
+    const exportData = table.getFilteredRowModel().rows.map((row) => {
+      const rowData = row.original as any;
+      return {
+        Time: new Date(rowData.createdAt).toLocaleString(),
+        User: rowData.user.name || rowData.user.email,
+        Action: rowData.action.replace(/_/g, " "),
+        Details: JSON.stringify(rowData.details),
+        Ticket: rowData.ticket ? rowData.ticket.title : "N/A",
+      };
+    });
+
+    // Convert to CSV
+    const headers = ["Time", "User", "Action", "Details", "Ticket"];
+    const csv = [
+      headers.join(","),
+      ...exportData.map(row => 
+        headers.map(header => 
+          JSON.stringify(row[header as keyof typeof row])
+        ).join(",")
+      )
+    ].join("\n");
+
+    // Download file
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `activity-log-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div>
-      <div className="flex items-center gap-4 py-4">
-        <Input
-          placeholder="Filter by user..."
-          value={(table.getColumn("user")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("user")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <Select
-          value={actionFilter}
-          onValueChange={(value) => {
-            setActionFilter(value);
-            table.getColumn("action")?.setFilterValue(value);
-          }}
+      <div className="flex items-center justify-between gap-4 py-4">
+        <div className="flex items-center gap-4">
+          <Input
+            placeholder="Filter by user..."
+            value={(table.getColumn("user")?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn("user")?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+          <Select
+            value={actionFilter}
+            onValueChange={(value) => {
+              setActionFilter(value);
+              table.getColumn("action")?.setFilterValue(value);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by action" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Actions</SelectItem>
+              <SelectItem value="added_comment">Comments</SelectItem>
+              <SelectItem value="changed_status">Status Changes</SelectItem>
+              <SelectItem value="changed_priority">Priority Changes</SelectItem>
+              <SelectItem value="assigned_ticket">Assignments</SelectItem>
+              <SelectItem value="resolved_ticket">Resolutions</SelectItem>
+              <SelectItem value="closed_ticket">Closures</SelectItem>
+              <SelectItem value="reopened_ticket">Reopens</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExport}
+          className="ml-auto"
         >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by action" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All Actions</SelectItem>
-            <SelectItem value="added_comment">Comments</SelectItem>
-            <SelectItem value="changed_status">Status Changes</SelectItem>
-            <SelectItem value="changed_priority">Priority Changes</SelectItem>
-            <SelectItem value="assigned_ticket">Assignments</SelectItem>
-            <SelectItem value="resolved_ticket">Resolutions</SelectItem>
-            <SelectItem value="closed_ticket">Closures</SelectItem>
-            <SelectItem value="reopened_ticket">Reopens</SelectItem>
-          </SelectContent>
-        </Select>
+          <Download className="mr-2 h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
       <div className="rounded-md border">
         <Table>
