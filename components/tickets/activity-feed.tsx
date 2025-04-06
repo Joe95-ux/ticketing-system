@@ -8,14 +8,33 @@ import {
   MessageSquare,
   RefreshCw,
   User2,
+  Filter,
 } from "lucide-react";
 import type { ActivityLog, User } from "@prisma/client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ActivityFeedProps {
   activities: (ActivityLog & {
     user: Pick<User, "name" | "email">;
   })[];
 }
+
+const activityTypes = {
+  added_comment: "Comments",
+  changed_status: "Status Changes",
+  changed_priority: "Priority Changes",
+  assigned_ticket: "Assignments",
+  resolved_ticket: "Resolutions",
+  closed_ticket: "Closures",
+  reopened_ticket: "Reopens",
+} as const;
 
 function getActivityIcon(action: string) {
   switch (action) {
@@ -60,6 +79,12 @@ function getActivityMessage(activity: ActivityLog & { user: Pick<User, "name" | 
 }
 
 export function ActivityFeed({ activities }: ActivityFeedProps) {
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(Object.keys(activityTypes));
+
+  const filteredActivities = activities.filter(activity => 
+    selectedTypes.includes(activity.action)
+  );
+
   if (!activities.length) {
     return (
       <div className="text-center text-sm text-muted-foreground">
@@ -70,24 +95,60 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
 
   return (
     <div className="space-y-4">
-      {activities.map((activity) => (
-        <div
-          key={activity.id}
-          className="flex items-start gap-x-3 text-sm text-muted-foreground"
-        >
-          <div className="mt-0.5">
-            {getActivityIcon(activity.action)}
-          </div>
-          <div className="flex-1">
-            <p className="text-foreground">
-              {getActivityMessage(activity)}
-            </p>
-            <p className="text-xs">
-              {formatDistanceToNow(activity.createdAt, { addSuffix: true })}
-            </p>
-          </div>
+      <div className="flex justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Filter className="mr-2 h-4 w-4" />
+              Filter
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {Object.entries(activityTypes).map(([key, label]) => (
+              <DropdownMenuCheckboxItem
+                key={key}
+                checked={selectedTypes.includes(key)}
+                onCheckedChange={(checked) => {
+                  setSelectedTypes(prev =>
+                    checked
+                      ? [...prev, key]
+                      : prev.filter(type => type !== key)
+                  );
+                }}
+              >
+                {label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {filteredActivities.length === 0 ? (
+        <div className="text-center text-sm text-muted-foreground">
+          No activities match the selected filters
         </div>
-      ))}
+      ) : (
+        <div className="space-y-4">
+          {filteredActivities.map((activity) => (
+            <div
+              key={activity.id}
+              className="flex items-start gap-x-3 text-sm text-muted-foreground"
+            >
+              <div className="mt-0.5">
+                {getActivityIcon(activity.action)}
+              </div>
+              <div className="flex-1">
+                <p className="text-foreground">
+                  {getActivityMessage(activity)}
+                </p>
+                <p className="text-xs">
+                  {formatDistanceToNow(activity.createdAt, { addSuffix: true })}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 } 
