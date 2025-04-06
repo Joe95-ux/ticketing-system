@@ -5,29 +5,27 @@ import { db } from "@/lib/db";
 import { sendTicketEmail } from "@/lib/email";
 import * as z from "zod";
 import { pusherServer } from "@/lib/pusher";
+import { logActivity } from "@/lib/activity-logger";
 
 const commentSchema = z.object({
   content: z.string().min(1),
 });
 
-type paramsType = Promise<{ id: string }>;
-
-export async function POST(req: Request, context: { params: paramsType }) {
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const json = await req.json();
-    const body = commentSchema.parse(json);
+    const body = await req.json();
+    const { content } = commentSchema.parse(body);
 
-    // Await the params resolution
-    const { id } = await context.params;
-
-    // Get the ticket and verify it exists
     const ticket = await db.ticket.findUnique({
-      where: { id },
+      where: { id: params.id },
       include: {
         createdBy: true,
         assignedTo: true,
@@ -60,11 +58,10 @@ export async function POST(req: Request, context: { params: paramsType }) {
       );
     }
 
-    // Create the comment
     const comment = await db.comment.create({
       data: {
-        content: body.content,
-        ticketId: id,
+        content,
+        ticketId: params.id,
         userId: session.user.id,
       },
       include: {
@@ -72,107 +69,71 @@ export async function POST(req: Request, context: { params: paramsType }) {
       },
     });
 
-    // Send real-time update
-    await pusherServer.trigger(`ticket-${id}`, "ticket:comment", {
-      ticketId: id,
-      commentId: comment.id,
-      content: comment.content,
-      createdBy: comment.user.name || comment.user.email || "Unknown User",
-      timestamp: comment.createdAt.toISOString(),
+    // Log the activity
+    await logActivity({
+      action: "added_comment",
+      userId: session.user.id,
+      ticketId: params.id,
+      details: {
+        commentId: comment.id,
+        content: content.substring(0, 100) + (content.length > 100 ? "..." : ""), // Truncate long comments in logs
+        userRole: session.user.role,
+      },
     });
 
-    // Determine who needs to be notified
-    const notifyUsers = new Map<
-      string,
-      { email: string; name: string | null }
-    >();
+    // Send real-time update
+    await pusherServer.trigger(`ticket-${params.id}`, "ticket:comment", {
+      ticketId: params.id,
+      updatedBy: session.user.name || session.user.email,
+      timestamp: new Date().toISOString(),
+      comment: content,
+    });
 
-    const addUserToNotify = (user: { email: string; name: string | null }) => {
-      if (user.email) notifyUsers.set(user.email, user);
-    };
-
-    // Always notify the ticket creator if they're not the commenter
+    // Send email notifications
     if (ticket.createdBy.id !== session.user.id) {
-      addUserToNotify({
-        email: ticket.createdBy.email!,
-        name: ticket.createdBy.name,
+      await sendTicketEmail("ticket-updated", {
+        ticketId: ticket.id,
+        ticketTitle: ticket.title,
+        recipientEmail: ticket.createdBy.email!,
+        recipientName: ticket.createdBy.name,
+        updaterName: session.user.name || session.user.email,
+        comment: content,
       });
     }
 
-    // Notify assigned support staff if they're not the commenter
     if (ticket.assignedTo && ticket.assignedTo.id !== session.user.id) {
-      addUserToNotify({
-        email: ticket.assignedTo.email!,
-        name: ticket.assignedTo.name,
+      await sendTicketEmail("ticket-updated", {
+        ticketId: ticket.id,
+        ticketTitle: ticket.title,
+        recipientEmail: ticket.assignedTo.email!,
+        recipientName: ticket.assignedTo.name,
+        updaterName: session.user.name || session.user.email,
+        comment: content,
       });
     }
-
-    // If comment is from support staff or admin, notify the ticket creator
-    if (
-      (session.user.role === "SUPPORT" || session.user.role === "ADMIN") &&
-      ticket.createdBy.id !== session.user.id
-    ) {
-      addUserToNotify({
-        email: ticket.createdBy.email!,
-        name: ticket.createdBy.name,
-      });
-    }
-
-    // Send notifications
-    await Promise.all(
-      Array.from(notifyUsers.values()).map((user) =>
-        sendTicketEmail("ticket-updated", {
-          ticketId: ticket.id,
-          ticketTitle: ticket.title,
-          recipientEmail: user.email,
-          recipientName: user.name,
-          updaterName: session.user.name,
-          comment: body.content,
-        })
-      )
-    );
 
     return NextResponse.json(comment);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 });
     }
-    console.error("Error creating comment:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    console.error("[COMMENTS_POST]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }
 
-export async function GET(req: Request, context: { params: paramsType }) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Await the params resolution
-    const { id } = await context.params;
-
-    const ticket = await db.ticket.findUnique({
-      where: { id },
-    });
-
-    if (!ticket) {
-      return new NextResponse("Ticket not found", { status: 404 });
-    }
-
-    // Check if user can view this ticket's comments
-    const canViewComments =
-      session.user.id === ticket.userId || // Ticket creator
-      session.user.id === ticket.assignedId || // Assigned support staff
-      session.user.role === "ADMIN" || // Admin
-      session.user.role === "SUPPORT"; // Other support staff
-
-    if (!canViewComments) {
-      return new NextResponse("Forbidden", { status: 403 });
-    }
-
     const comments = await db.comment.findMany({
-      where: { ticketId: id },
+      where: { ticketId: params.id },
       include: {
         user: true,
       },
@@ -183,7 +144,7 @@ export async function GET(req: Request, context: { params: paramsType }) {
 
     return NextResponse.json(comments);
   } catch (error) {
-    console.error("Error fetching comments:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    console.error("[COMMENTS_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }

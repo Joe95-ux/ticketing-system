@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 
 export type ActivityAction =
   | "created_ticket"
@@ -15,7 +16,7 @@ interface LogActivityProps {
   action: ActivityAction;
   userId: string;
   ticketId?: string;
-  details: Record<string, any>;
+  details: Prisma.JsonValue;
 }
 
 export async function logActivity({
