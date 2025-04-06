@@ -55,6 +55,7 @@ model User {
   comments      Comment[]
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  activityLogs  ActivityLog[]
 }
 
 model Ticket {
@@ -73,6 +74,7 @@ model Ticket {
   assignedTo  User?     @relation("AssignedTickets", fields: [assignedId], references: [id])
   comments    Comment[]
   messages    Message[]
+  activityLogs ActivityLog[]
 
   @@index([userId])
   @@index([assignedId])
@@ -129,4 +131,20 @@ model KnowledgeArticle {
   updatedAt   DateTime  @updatedAt
 
   @@index([categoryId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid()) @map("_id")
+  action    String   // e.g., "created_ticket", "updated_status", "added_comment"
+  details   Json     // Additional context about the action
+  ticketId  String?  // Optional as some activities might not be ticket-specific
+  userId    String   // Who performed the action
+  createdAt DateTime @default(now())
+
+  ticket    Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([userId])
+  @@index([createdAt])
 }
