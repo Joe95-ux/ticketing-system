@@ -1,50 +1,48 @@
 "use client";
 
-import { Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useSoundStore } from "./notification-sounds";
+import { Volume2, VolumeX } from "lucide-react";
+import { soundManager } from "./notification-sounds";
+import { create } from "zustand";
+
+interface SoundStore {
+  volume: number;
+  muted: boolean;
+  setVolume: (volume: number) => void;
+  toggleMute: () => void;
+}
+
+const useSoundStore = create<SoundStore>((set) => ({
+  volume: 0.5,
+  muted: false,
+  setVolume: (volume) => {
+    set({ volume });
+    soundManager.setVolume(volume);
+  },
+  toggleMute: () => {
+    set((state) => {
+      const muted = !state.muted;
+      soundManager.setVolume(muted ? 0 : state.volume);
+      return { muted };
+    });
+  },
+}));
 
 export function SoundControl() {
-  const { volume, muted, setVolume, toggleMute } = useSoundStore();
+  const { muted, toggleMute } = useSoundStore();
 
   return (
-    <TooltipProvider>
-      <div className="flex items-center gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMute}
-              className="h-8 w-8"
-            >
-              {muted ? (
-                <VolumeX className="h-4 w-4" />
-              ) : (
-                <Volume2 className="h-4 w-4" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{muted ? "Unmute" : "Mute"} notification sounds</p>
-          </TooltipContent>
-        </Tooltip>
-        <Slider
-          className="w-24"
-          value={[volume]}
-          min={0}
-          max={1}
-          step={0.1}
-          onValueChange={([value]) => setVolume(value)}
-        />
-      </div>
-    </TooltipProvider>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleMute}
+      title={muted ? "Unmute notifications" : "Mute notifications"}
+    >
+      {muted ? (
+        <VolumeX className="h-5 w-5" />
+      ) : (
+        <Volume2 className="h-5 w-5" />
+      )}
+    </Button>
   );
 } 

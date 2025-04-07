@@ -18,12 +18,15 @@ export const useSoundStore = create<SoundStore>((set) => ({
 
 class SoundManager {
   private static instance: SoundManager;
-  private notificationSound: HTMLAudioElement;
-  private commentSound: HTMLAudioElement;
+  private notificationSound: HTMLAudioElement | null = null;
+  private commentSound: HTMLAudioElement | null = null;
+  private volume: number = 0.5;
 
   private constructor() {
-    this.notificationSound = new Audio("/sounds/notification.mp3");
-    this.commentSound = new Audio("/sounds/comment.mp3");
+    if (typeof window !== 'undefined') {
+      this.notificationSound = new Audio("/sounds/notification.mp3");
+      this.commentSound = new Audio("/sounds/comment.mp3");
+    }
   }
 
   public static getInstance(): SoundManager {
@@ -33,23 +36,38 @@ class SoundManager {
     return SoundManager.instance;
   }
 
+  public setVolume(volume: number) {
+    this.volume = volume;
+    if (this.notificationSound) {
+      this.notificationSound.volume = volume;
+    }
+    if (this.commentSound) {
+      this.commentSound.volume = volume;
+    }
+  }
+
   private getVolume(): number {
-    const { volume, muted } = useSoundStore.getState();
-    return muted ? 0 : volume;
+    return this.volume;
   }
 
   public playNotification() {
-    this.notificationSound.volume = this.getVolume();
-    this.notificationSound.play().catch(() => {
-      // Ignore autoplay errors
-    });
+    if (this.notificationSound) {
+      this.notificationSound.currentTime = 0;
+      this.notificationSound.volume = this.getVolume();
+      this.notificationSound.play().catch(err => {
+        console.error("Failed to play notification sound:", err);
+      });
+    }
   }
 
   public playComment() {
-    this.commentSound.volume = this.getVolume();
-    this.commentSound.play().catch(() => {
-      // Ignore autoplay errors
-    });
+    if (this.commentSound) {
+      this.commentSound.currentTime = 0;
+      this.commentSound.volume = this.getVolume();
+      this.commentSound.play().catch(err => {
+        console.error("Failed to play comment sound:", err);
+      });
+    }
   }
 }
 
