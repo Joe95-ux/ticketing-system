@@ -27,7 +27,6 @@ import { cn } from "@/lib/utils";
 import Logo from "@/components/logo";
 import { LucideIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { SoundControl } from "./audio/sound-control";
 
 interface SearchResponse {
   tickets: TicketResult[];
@@ -300,8 +299,6 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-
-          <SoundControl />
         </div>
       </div>
 

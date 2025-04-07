@@ -2,11 +2,13 @@
 
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
-import { Form, FormField, FormItem, FormControl } from "@/components/ui/form"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
+import { Form, FormField, FormItem, FormControl, FormDescription, FormLabel } from "@/components/ui/form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Separator } from "@/components/ui/separator"
+import { Slider } from "@/components/ui/slider"
+import { useSoundStore } from "@/components/audio/notification-sounds"
 
 const formSchema = z.object({
   emailNotifications: z.boolean().default(true),
@@ -28,100 +30,107 @@ export function NotificationsForm() {
     },
   })
 
+  const { volume, muted, setVolume, toggleMute } = useSoundStore()
+
   function onSubmit(data: NotificationFormValues) {
     console.log(data)
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="emailNotifications"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between space-x-4">
-                <div className="space-y-0.5">
-                  <Label htmlFor="email-notifications">Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive email notifications for important updates.
-                  </p>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    id="email-notifications"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="pushNotifications"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between space-x-4">
-                <div className="space-y-0.5">
-                  <Label htmlFor="push-notifications">Push Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive push notifications in your browser.
-                  </p>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    id="push-notifications"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="ticketUpdates"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between space-x-4">
-                <div className="space-y-0.5">
-                  <Label htmlFor="ticket-updates">Ticket Updates</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Get notified when your tickets are updated.
-                  </p>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    id="ticket-updates"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="messageNotifications"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between space-x-4">
-                <div className="space-y-0.5">
-                  <Label htmlFor="message-notifications">Message Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive notifications for new messages.
-                  </p>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    id="message-notifications"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div>
+          <h3 className="mb-4 text-lg font-medium">Email Notifications</h3>
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="emailNotifications"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Email Notifications</FormLabel>
+                    <FormDescription>
+                      Receive email notifications when there are updates to your tickets.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
-        <Button type="submit" className="w-fit">Save preferences</Button>
+        <Separator />
+        <div>
+          <h3 className="mb-4 text-lg font-medium">Push Notifications</h3>
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="pushNotifications"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Browser Notifications</FormLabel>
+                    <FormDescription>
+                      Receive browser notifications when there are updates to your tickets.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+        <Separator />
+        <div>
+          <h3 className="mb-4 text-lg font-medium">Sound Settings</h3>
+          <div className="space-y-4">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <div className="space-y-0.5">
+                <FormLabel>Notification Sounds</FormLabel>
+                <FormDescription>
+                  Play sounds for notifications and updates.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Checkbox
+                  checked={!muted}
+                  onCheckedChange={toggleMute}
+                />
+              </FormControl>
+            </FormItem>
+            {!muted && (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                <div className="space-y-0.5">
+                  <FormLabel>Sound Volume</FormLabel>
+                  <FormDescription>
+                    Adjust the volume of notification sounds.
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Slider
+                    className="w-[120px]"
+                    value={[volume]}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    onValueChange={([value]) => setVolume(value)}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          </div>
+        </div>
+        <Button type="submit">Save changes</Button>
       </form>
     </Form>
   )
