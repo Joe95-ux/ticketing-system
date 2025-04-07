@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Download } from "lucide-react";
+import { ActivityWithRelations } from "@/lib/activities";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -62,7 +63,7 @@ export function DataTable<TData, TValue>({
   const handleExport = () => {
     // Get filtered and sorted data
     const exportData = table.getFilteredRowModel().rows.map((row) => {
-      const rowData = row.original as any;
+      const rowData = row.original as ActivityWithRelations;
       return {
         Time: new Date(rowData.createdAt).toLocaleString(),
         User: rowData.user.name || rowData.user.email,

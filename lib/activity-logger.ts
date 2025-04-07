@@ -16,7 +16,7 @@ interface LogActivityProps {
   action: ActivityAction;
   userId: string;
   ticketId?: string;
-  details: Prisma.JsonValue;
+  details: Prisma.InputJsonValue;
 }
 
 export async function logActivity({

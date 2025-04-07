@@ -1,5 +1,5 @@
 import { Activity } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { cn } from "../lib/utils";
 import { buttonVariants } from "../components/ui/button";
 
@@ -7,7 +7,7 @@ export function AdminNav() {
   return (
     <nav className="flex space-x-2">
       <Link
-        to="/admin/activities"
+        href="/admin/activities"
         className={cn(
           buttonVariants({ variant: "ghost" }),
           "justify-start"

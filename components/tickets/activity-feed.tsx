@@ -36,6 +36,13 @@ const activityTypes = {
   reopened_ticket: "Reopens",
 } as const;
 
+type ActivityDetails = {
+  content?: string;
+  newStatus?: string;
+  newPriority?: string;
+  assignedTo?: string;
+};
+
 function getActivityIcon(action: string) {
   switch (action) {
     case "added_comment":
@@ -56,7 +63,7 @@ function getActivityIcon(action: string) {
 
 function getActivityMessage(activity: ActivityLog & { user: Pick<User, "name" | "email"> }) {
   const userName = activity.user.name || activity.user.email;
-  const details = activity.details as Record<string, any>;
+  const details = activity.details as ActivityDetails;
 
   switch (activity.action) {
     case "added_comment":

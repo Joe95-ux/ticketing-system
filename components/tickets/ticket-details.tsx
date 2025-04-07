@@ -7,7 +7,7 @@ import { TicketActions } from "@/components/tickets/ticket-actions";
 import { TicketComments } from "@/components/tickets/ticket-comments";
 import { TicketBlockchainHistory } from "@/components/tickets/ticket-blockchain-history";
 import { ContentRenderer } from "@/components/content-renderer";
-import type { Ticket, ActivityLog, User } from "@/types";
+import type { ActivityLog, User } from "@prisma/client";
 import { useState } from "react";
 import { EditTicketForm } from "./edit-ticket-form";
 import { useSession } from "next-auth/react";
@@ -16,6 +16,7 @@ import { ActivityFeed } from "./activity-feed";
 type Status = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 type BadgeVariant = "warning" | "default" | "success" | "secondary" | "destructive" | "outline";
+type Category = "GENERAL" | "TECHNICAL" | "BILLING" | "FEATURE_REQUEST" | "BUG";
 
 const statusVariants: Record<Status, BadgeVariant> = {
   OPEN: "warning",
@@ -31,12 +32,30 @@ const priorityVariants: Record<Priority, BadgeVariant> = {
   URGENT: "destructive",
 };
 
+type BaseTicket = {
+  id: string;
+  title: string;
+  description: string;
+  status: Status;
+  priority: Priority;
+  category: Category;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  assignedId: string | null;
+  txHash: string | null;
+};
+
+export type TicketWithRelations = BaseTicket & {
+  createdBy: Pick<User, "id" | "name" | "email">;
+  assignedTo: Pick<User, "name" | "email"> | null;
+  activityLogs: (ActivityLog & {
+    user: Pick<User, "name" | "email">;
+  })[];
+};
+
 interface TicketDetailsProps {
-  ticket: Ticket & {
-    activityLogs: (ActivityLog & {
-      user: Pick<User, "name" | "email">;
-    })[];
-  };
+  ticket: TicketWithRelations;
 }
 
 export function TicketDetails({ ticket }: TicketDetailsProps) {

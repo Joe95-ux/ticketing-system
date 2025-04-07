@@ -84,7 +84,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { status, priority, assignedId } = updateSchema.parse(body);
+    const { status, priority, assignedToId: assignedId } = updateSchema.parse(body);
 
     const ticket = await db.ticket.findUnique({
       where: { id: params.id },
@@ -192,7 +192,7 @@ export async function PATCH(
         ticketTitle: ticket.title,
         recipientEmail: notifyUser.email!,
         recipientName: notifyUser.name,
-        updaterName: session.user.name || session.user.email,
+        updaterName: session.user.name || session.user.email || "Unknown User",
         status: status || undefined,
         priority: priority || undefined,
         assignedTo: updatedTicket.assignedTo?.name || undefined,

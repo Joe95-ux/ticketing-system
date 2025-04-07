@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { DataTable } from "./data-table";
 import { columns } from "./columns";
+import { ActivityWithRelations } from "@/lib/activities";
 
 export const metadata = {
   title: "Activity Log",
@@ -36,7 +37,7 @@ export default async function ActivityLogPage() {
       createdAt: "desc",
     },
     take: 100, // Limit to last 100 activities
-  });
+  }) as unknown as ActivityWithRelations[];
 
   return (
     <div className="container py-10">

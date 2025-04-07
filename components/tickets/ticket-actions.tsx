@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { Ticket, User } from "@/types";
+import { useSession } from "next-auth/react"
+import { User } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,9 +33,10 @@ import { toast } from "sonner";
 import { MoreVertical, UserPlus, Wallet, Pencil, Trash2 } from "lucide-react";
 import { useBlockchain } from "@/contexts/blockchain-context";
 import { useState } from "react";
+import { TicketWithRelations } from "./ticket-details";
 
 interface TicketActionsProps {
-  ticket: Ticket;
+  ticket: TicketWithRelations;
   canEdit: boolean;
   canDelete: boolean;
   onEdit: () => void;
@@ -209,6 +210,7 @@ export function TicketActions({ ticket, canEdit, canDelete, onEdit }: TicketActi
       router.push('/tickets');
       router.refresh();
     } catch (error) {
+      console.error("Delete error:", error);
       toast.error("Failed to delete the ticket. Please try again.");
     } finally {
       setIsDeleting(false);

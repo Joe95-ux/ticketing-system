@@ -5,12 +5,15 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 type EmailTemplate = 'ticket-created' | 'ticket-assigned' | 'ticket-updated' | 'ticket-resolved' | 'welcome-user';
 
 interface TicketEmailProps {
-  ticketId?: string;
-  ticketTitle?: string;
-  recipientEmail?: string;
-  recipientName?: string | null;
+  ticketId: string;
+  ticketTitle: string;
+  recipientEmail: string;
+  recipientName: string | null;
+  updaterName: string;
+  status?: string;
+  priority?: string;
+  assignedTo?: string;
   assigneeName?: string | null;
-  updaterName?: string | null;
   comment?: string;
   name?: string;
   email?: string;
