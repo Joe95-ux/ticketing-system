@@ -13,47 +13,53 @@ export function CreateTicketFAB() {
   const { status } = useSession();
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Only show on authenticated pages except the tickets page
-  if (pathname === "/tickets" || status !== "authenticated") {
-    return null;
-  }
-
   useEffect(() => {
     const handleScroll = () => {
-      const scrolled = window.scrollY > 50;
-      setIsScrolled(scrolled);
+      setIsScrolled(window.scrollY > 50);
     };
-
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  if (pathname === "/tickets" || status !== "authenticated") return null;
 
   return (
     <Button
       className={cn(
-        "fixed bottom-6 right-6 shadow-lg transition-all duration-200 ease-in-out",
-        "hover:shadow-xl hover:scale-105",
-        "md:px-6 md:gap-2",
-        isScrolled
-          ? "w-14 h-14 rounded-full"
-          : "h-14 rounded-full md:rounded-full md:hover:rounded-lg md:w-auto"
+        "fixed bottom-6 right-6 z-50 shadow-lg",
+        // Base styles
+        "h-14 w-14 rounded-full p-0", // Mobile default (circle)
+        "md:w-auto md:px-4 md:rounded-full", // Desktop default
+        // Shape transition (smooth morphing between circle and pill)
+        "transition-[width,border-radius,padding] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        // Hover effects
+        "hover:shadow-xl hover:scale-[1.02]",
+        "transition-all duration-200 ease-out",
+        // Scroll state
+        isScrolled 
+          ? "md:w-14 md:px-0" // Scrolled - force circle
+          : "md:hover:w-[140px] md:hover:rounded-lg" // Desktop hover pill
       )}
       onClick={() => router.push("/tickets/new")}
     >
       <Plus className={cn(
-        "h-6 w-6 transition-transform",
+        "h-6 w-6 shrink-0",
         "md:h-5 md:w-5",
+        // Icon scaling transition
+        "transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
         !isScrolled && "md:scale-90"
       )} />
       <span className={cn(
-        "hidden",
-        !isScrolled && "md:inline-block",
-        "transition-opacity duration-200",
+        "hidden whitespace-nowrap overflow-hidden",
+        "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        // Text animation
+        !isScrolled 
+          ? "md:inline-block md:max-w-[80px] md:opacity-100 md:ml-2" 
+          : "md:max-w-0 md:opacity-0 md:ml-0",
         "font-medium"
       )}>
         Create Ticket
       </span>
-      <span className="sr-only">Create New Ticket</span>
     </Button>
   );
-} 
+}
