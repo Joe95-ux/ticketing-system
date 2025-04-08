@@ -27,24 +27,33 @@ export function useRealtimeTicket(ticketId: string, initialData: TicketWithRelat
   const router = useRouter();
 
   useEffect(() => {
-    const channel = pusherClient.subscribe(`ticket-${ticketId}`);
+    if (!ticketId) return;
+
+    const channelName = `ticket-${ticketId}`;
+    const channel = pusherClient.subscribe(channelName);
 
     channel.bind("ticket:update", (data: TicketUpdate) => {
+      let shouldRefresh = false;
+
       if (data.status) {
         toast.info(`${data.updatedBy} changed status to ${data.status}`);
         soundManager.playNotification();
-        router.refresh();
+        shouldRefresh = true;
       }
+
       if (data.priority) {
         toast.info(`${data.updatedBy} changed priority to ${data.priority}`);
         soundManager.playNotification();
-        router.refresh();
+        shouldRefresh = true;
       }
+
       if (data.assignedTo) {
         toast.info(`${data.updatedBy} assigned ticket to ${data.assignedTo}`);
         soundManager.playNotification();
-        router.refresh();
+        shouldRefresh = true;
       }
+
+      if (shouldRefresh) router.refresh();
     });
 
     channel.bind("ticket:comment", (data: TicketUpdate) => {
@@ -56,10 +65,11 @@ export function useRealtimeTicket(ticketId: string, initialData: TicketWithRelat
     });
 
     return () => {
-      channel.unbind_all();
-      pusherClient.unsubscribe(`ticket-${ticketId}`);
+      channel.unbind("ticket:update");
+      channel.unbind("ticket:comment");
+      pusherClient.unsubscribe(channelName);
     };
-  }, [ticketId, router]);
+  }, [ticketId]);
 
   return initialData;
-} 
+}

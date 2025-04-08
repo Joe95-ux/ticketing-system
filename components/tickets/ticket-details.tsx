@@ -65,7 +65,7 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
   const isCreator = session?.user?.id === ticket.createdBy.id;
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+    <div className="grid grid-cols-1 gap-6">
       <div className="space-y-6 md:col-span-3">
         <Card>
           <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">

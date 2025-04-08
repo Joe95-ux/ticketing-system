@@ -11,9 +11,11 @@ const commentSchema = z.object({
   content: z.string().min(1),
 });
 
+type paramsType = Promise<{ id: string }>;
+
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: paramsType }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -23,9 +25,10 @@ export async function POST(
 
     const body = await req.json();
     const { content } = commentSchema.parse(body);
+    const {id} = await params; 
 
     const ticket = await db.ticket.findUnique({
-      where: { id: params.id },
+      where: { id},
       include: {
         createdBy: true,
         assignedTo: true,
@@ -124,16 +127,16 @@ export async function POST(
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: paramsType}
 ) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-
+    const {id} = await params;
     const comments = await db.comment.findMany({
-      where: { ticketId: params.id },
+      where: { ticketId: id },
       include: {
         user: true,
       },

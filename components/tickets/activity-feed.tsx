@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { ActivityLog, User } from "@prisma/client";
 import { useState } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -43,6 +44,10 @@ type ActivityDetails = {
   assignedTo?: string;
 };
 
+function toPlainText(html: string) {
+  return DOMPurify.sanitize(html, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+}
+
 function getActivityIcon(action: string) {
   switch (action) {
     case "added_comment":
@@ -67,7 +72,7 @@ function getActivityMessage(activity: ActivityLog & { user: Pick<User, "name" | 
 
   switch (activity.action) {
     case "added_comment":
-      return `${userName} commented: "${details.content}"`;
+      return `${userName} commented: "${toPlainText(details.content || "")}"`;
     case "changed_status":
       return `${userName} changed status to ${details.newStatus}`;
     case "changed_priority":

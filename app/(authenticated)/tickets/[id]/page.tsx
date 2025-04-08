@@ -1,107 +1,60 @@
-import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ErrorFallback } from "@/components/error-fallback";
-import { TicketDetails } from "@/components/tickets/ticket-details";
-import { useRealtimeTicket } from "@/hooks/use-realtime-ticket";
-import { Suspense } from "react";
+import { TicketContent } from "./ticket-content";
+import type { Metadata } from "next";
 import type { Ticket, User, Comment, ActivityLog } from "@prisma/client";
 
-interface TicketPageProps {
-  params: {
-    id: string;
-  };
-}
-
-interface TicketWithRelations extends Ticket {
-  createdBy: User;
-  assignedTo: User | null;
-  comments: (Comment & { user: User })[];
-  activityLogs: (ActivityLog & {
-    user: Pick<User, "name" | "email">;
-  })[];
-}
+type TicketPageProps = Promise<{
+  id: string;
+}>
 
 export async function generateMetadata({ params }: TicketPageProps): Promise<Metadata> {
-  try {
-    const ticket = await db.ticket.findUnique({
-      where: { id: params.id },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-      },
-    });
+  const {id} = await params;
+  const ticket = await db.ticket.findUnique({
+    where: { id},
+    select: { id: true, title: true, description: true },
+  });
 
-    if (!ticket) {
-      return {
-        title: "Ticket Not Found",
-        description: "The requested ticket could not be found."
-      };
-    }
-
+  if (!ticket) {
     return {
-      title: `Ticket #${ticket.id} - ${ticket.title}`,
-      description: ticket.description || "No description provided"
-    };
-  } catch {
-    return {
-      title: "Error Loading Ticket",
-      description: "An error occurred while loading the ticket."
+      title: "Ticket Not Found",
+      description: "The requested ticket could not be found.",
     };
   }
-}
 
-function TicketContent({ ticket }: { ticket: TicketWithRelations }) {
-  useRealtimeTicket(ticket.id, ticket);
-  return <TicketDetails ticket={ticket} />;
+  return {
+    title: `Ticket #${ticket.id} - ${ticket.title}`,
+    description: ticket.description || "No description provided",
+  };
 }
 
 export default async function TicketPage({ params }: TicketPageProps) {
   const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    redirect("/auth/signin");
-  }
+  if (!session?.user) redirect("/auth/signin");
+  const {id} = await params;
 
   const ticket = await db.ticket.findUnique({
-    where: { id: params.id },
+    where: { id},
     include: {
       createdBy: true,
       assignedTo: true,
       comments: {
-        include: {
-          user: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
+        include: { user: true },
+        orderBy: { createdAt: "desc" },
       },
       activityLogs: {
         include: {
-          user: {
-            select: {
-              name: true,
-              email: true,
-            },
-          },
+          user: { select: { name: true, email: true } },
         },
-        orderBy: {
-          createdAt: "desc",
-        },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
 
-  if (!ticket) {
-    return <ErrorFallback message="Ticket not found" />;
-  }
+  if (!ticket) return <ErrorFallback message="Ticket not found" />;
 
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <TicketContent ticket={ticket} />
-    </Suspense>
-  );
+  return <TicketContent ticket={ticket} />;
 }
