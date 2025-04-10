@@ -21,7 +21,7 @@ export function MetaMaskPrompt() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[425px] p-6">
+      <DialogContent className="sm:max-w-[450px] p-6">
         <DialogHeader className="space-y-4">
           <div className="mx-auto w-16 h-16 relative">
             <img
@@ -38,7 +38,7 @@ export function MetaMaskPrompt() {
             wallet and gateway to blockchain apps.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="flex-col sm:flex-row gap-3 mt-6">
+        <DialogFooter className="flex justify-center flex-col sm:flex-row gap-3 mt-6">
           <Button
             variant="outline"
             onClick={() => setIsOpen(false)}
