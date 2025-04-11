@@ -12,16 +12,16 @@ export const metadata: Metadata = {
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-6">
-      <div className="space-y-0.5">
+    <div className="space-y-6 pb-6">
+      <div>
         <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mt-1">
           Manage your account settings and preferences.
         </p>
       </div>
-      <Separator className="my-6" />
-      <div className="space-y-6">
-        <Card>
+      <Separator className="my-4" />
+      <div className="flex flex-col gap-6">
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle>Profile</CardTitle>
             <CardDescription>
@@ -32,7 +32,7 @@ export default function SettingsPage() {
             <ProfileForm />
           </CardContent>
         </Card>
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle>Notifications</CardTitle>
             <CardDescription>
@@ -43,7 +43,7 @@ export default function SettingsPage() {
             <NotificationsForm />
           </CardContent>
         </Card>
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle>Appearance</CardTitle>
             <CardDescription>
@@ -57,4 +57,4 @@ export default function SettingsPage() {
       </div>
     </div>
   );
-} 
+}
