@@ -5,14 +5,13 @@ import { db } from "@/lib/db";
 import { ErrorFallback } from "@/components/error-fallback";
 import { TicketContent } from "./ticket-content";
 import type { Metadata } from "next";
-import type { Ticket, User, Comment, ActivityLog } from "@prisma/client";
 
 type TicketPageProps = Promise<{
   id: string;
 }>
 
-export async function generateMetadata({ params }: TicketPageProps): Promise<Metadata> {
-  const {id} = await params;
+export async function generateMetadata(props: { params: TicketPageProps }): Promise<Metadata> {
+  const {id} = await props.params;
   const ticket = await db.ticket.findUnique({
     where: { id},
     select: { id: true, title: true, description: true },
@@ -31,10 +30,10 @@ export async function generateMetadata({ params }: TicketPageProps): Promise<Met
   };
 }
 
-export default async function TicketPage({ params }: TicketPageProps) {
+export default async function TicketPage(props: { params: TicketPageProps }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/signin");
-  const {id} = await params;
+  const {id} = await props.params;
 
   const ticket = await db.ticket.findUnique({
     where: { id},
