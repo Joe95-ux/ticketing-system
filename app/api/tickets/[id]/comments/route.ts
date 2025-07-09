@@ -100,7 +100,7 @@ export async function POST(
         ticketTitle: ticket.title,
         recipientEmail: user!.email!,
         recipientName: user!.name,
-        updaterName: session.user.name || session.user.email!,
+        updaterName: session.user.name! || session.user.email!,
         comment: content,
       });
     }
