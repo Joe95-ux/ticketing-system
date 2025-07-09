@@ -9,7 +9,7 @@ interface TicketEmailProps {
   ticketTitle: string;
   recipientEmail: string;
   recipientName: string | null;
-  updaterName: string;
+  updaterName?: string;
   status?: string;
   priority?: string;
   assignedTo?: string;

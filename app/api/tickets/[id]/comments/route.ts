@@ -64,7 +64,7 @@ export async function POST(
     const comment = await db.comment.create({
       data: {
         content,
-        ticketId: params.id,
+        ticketId: id,
         userId: session.user.id,
       },
       include: {
@@ -76,7 +76,7 @@ export async function POST(
     await logActivity({
       action: "added_comment",
       userId: session.user.id,
-      ticketId: params.id,
+      ticketId: id,
       details: {
         commentId: comment.id,
         content: content.substring(0, 100) + (content.length > 100 ? "..." : ""), // Truncate long comments in logs
@@ -85,8 +85,8 @@ export async function POST(
     });
 
     // Send real-time update
-    await pusherServer.trigger(`ticket-${params.id}`, "ticket:comment", {
-      ticketId: params.id,
+    await pusherServer.trigger(`ticket-${id}`, "ticket:comment", {
+      ticketId: id,
       updatedBy: session.user.name || session.user.email,
       timestamp: new Date().toISOString(),
       comment: content,
@@ -99,7 +99,7 @@ export async function POST(
         ticketTitle: ticket.title,
         recipientEmail: ticket.createdBy.email!,
         recipientName: ticket.createdBy.name,
-        updaterName: session.user.name || session.user.email,
+        updaterName: session.user.name! || session.user.email!,
         comment: content,
       });
     }
@@ -110,7 +110,7 @@ export async function POST(
         ticketTitle: ticket.title,
         recipientEmail: ticket.assignedTo.email!,
         recipientName: ticket.assignedTo.name,
-        updaterName: session.user.name || session.user.email,
+        updaterName: session.user.name! || session.user.email!,
         comment: content,
       });
     }
