@@ -113,7 +113,7 @@ export async function POST(
               ticketTitle: ticket.title,
               recipientEmail: user.email,
               recipientName: user.name,
-              updaterName: session.user.name,
+              updaterName: session.user.name!,
             })
           )
         );

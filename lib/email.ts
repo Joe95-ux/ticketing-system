@@ -8,7 +8,7 @@ interface TicketEmailProps {
   ticketId: string;
   ticketTitle: string;
   recipientEmail: string;
-  recipientName: string | null;
+  recipientName?: string | null;
   updaterName?: string;
   status?: string;
   priority?: string;
