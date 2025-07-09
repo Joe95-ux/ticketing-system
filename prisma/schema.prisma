@@ -135,10 +135,10 @@ model KnowledgeArticle {
 
 model ActivityLog {
   id        String   @id @default(cuid()) @map("_id")
-  action    String   // e.g., "created_ticket", "updated_status", "added_comment"
-  details   Json     // Additional context about the action
-  ticketId  String?  // Optional as some activities might not be ticket-specific
-  userId    String   // Who performed the action
+  action    String
+  details   Json
+  ticketId  String?  @db.ObjectId
+  userId    String   @db.ObjectId
   createdAt DateTime @default(now())
 
   ticket    Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
@@ -148,3 +148,4 @@ model ActivityLog {
   @@index([userId])
   @@index([createdAt])
 }
+
