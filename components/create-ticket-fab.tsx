@@ -54,7 +54,7 @@ export function CreateTicketFAB() {
         "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
         // Text animation
         !isScrolled 
-          ? "md:inline-block md:max-w-[80px] md:opacity-100 md:ml-2" 
+          ? "md:inline-block md:max-w-[100px] md:opacity-100 md:ml-2" 
           : "md:max-w-0 md:opacity-0 md:ml-0",
         "font-medium"
       )}>
