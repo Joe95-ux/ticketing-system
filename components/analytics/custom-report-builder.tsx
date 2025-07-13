@@ -278,7 +278,7 @@ export function CustomReportBuilder() {
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-4">
-          <div>
+          <div className="space-y-4">
             <Label>Date Range</Label>
             <DatePickerWithRange 
               className="w-full" 
@@ -286,7 +286,7 @@ export function CustomReportBuilder() {
               onChange={setDateRange}
             />
           </div>
-          <div>
+          <div className="space-y-4">
             <Label>Group By</Label>
             <Select value={selectedDimension} onValueChange={setSelectedDimension}>
               <SelectTrigger>
