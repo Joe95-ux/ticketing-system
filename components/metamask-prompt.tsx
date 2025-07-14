@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
+import Image from "next/image";
 
 export function MetaMaskPrompt() {
   const [isOpen, setIsOpen] = React.useState(true);
@@ -24,10 +25,11 @@ export function MetaMaskPrompt() {
       <DialogContent className="sm:max-w-[450px] p-6 flex flex-col justify-center">
         <DialogHeader className="space-y-4">
           <div className="mx-auto w-16 h-16 relative">
-            <img
+            <Image
               src="/metamask-fox.svg"
               alt="MetaMask Logo"
-              className="w-full h-full object-contain"
+              width={100}
+              height={100}
             />
           </div>
           <DialogTitle className="text-xl text-center">
@@ -38,7 +40,7 @@ export function MetaMaskPrompt() {
             wallet and gateway to blockchain apps.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="flex justify-center flex-col sm:flex-row gap-3 mt-6 w-full">
+        <DialogFooter className="flex justify-center sm:justify-center flex-col sm:flex-row gap-3 mt-6 w-full">
           <Button
             variant="outline"
             onClick={() => setIsOpen(false)}
