@@ -13,13 +13,13 @@ export function CreateTicketFAB() {
   const { status } = useSession();
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Track scroll position
   useEffect(() => {
-    const onScroll = () => {
+    const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   if (pathname === "/tickets" || status !== "authenticated") return null;
@@ -28,25 +28,19 @@ export function CreateTicketFAB() {
     <Button
       onClick={() => router.push("/tickets/new")}
       className={cn(
-        "fixed bottom-6 right-6 z-50 flex items-center justify-center",
-        "transition-all duration-300 ease-in-out shadow-lg",
-        "h-14 rounded-full p-0",
-        "bg-primary text-white",
-        // Expand to pill shape on hover if not scrolled
-        !isScrolled ? 
-          "w-14 md:hover:w-40 md:px-4" : 
-          "w-14 px-0",
-        // Rounded adjustment on hover
-        !isScrolled ? 
-          "md:hover:rounded-lg" : 
-          "rounded-full"
+        "fixed bottom-6 right-6 z-50 flex items-center justify-center bg-primary text-white shadow-lg",
+        "transition-all duration-300 ease-in-out",
+        "hover:shadow-xl",
+        isScrolled
+          ? "w-14 h-14 rounded-full px-0"
+          : "w-auto h-14 rounded-full px-4"
       )}
     >
-      <Plus className="h-6 w-6 transition-transform duration-300" />
+      <Plus className="h-6 w-6" />
       <span
         className={cn(
-          "ml-2 overflow-hidden whitespace-nowrap text-base font-semibold transition-all duration-300",
-          isScrolled ? "max-w-0 opacity-0" : "max-w-[120px] opacity-100"
+          "ml-2 whitespace-nowrap text-base font-semibold transition-all duration-300",
+          isScrolled ? "opacity-0 w-0 overflow-hidden" : "opacity-100 w-auto"
         )}
       >
         Create Ticket
