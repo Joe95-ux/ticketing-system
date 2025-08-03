@@ -13,13 +13,21 @@ export function CreateTicketFAB() {
   const { status } = useSession();
   const [isScrolled, setIsScrolled] = useState(false);
 
+  // Improved scroll detection with throttling
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+    let timeout: NodeJS.Timeout;
+    const onScroll = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        setIsScrolled(window.scrollY > 50);
+      }, 100);
     };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   if (pathname === "/tickets" || status !== "authenticated") return null;
@@ -28,19 +36,24 @@ export function CreateTicketFAB() {
     <Button
       onClick={() => router.push("/tickets/new")}
       className={cn(
-        "fixed bottom-6 right-6 z-50 flex items-center justify-center bg-primary text-white shadow-lg",
-        "transition-all duration-300 ease-in-out",
-        "hover:shadow-xl",
-        isScrolled
-          ? "w-14 h-14 rounded-full px-0"
-          : "w-auto h-14 rounded-full px-4"
+        "fixed bottom-6 right-6 z-50 flex items-center justify-center gap-2 cursor-pointer",
+        "transition-all duration-200 ease-in-out shadow-lg",
+        "h-14 rounded-full p-4 overflow-hidden",
+        "bg-primary text-white font-bold",
+        // Base size when scrolled
+        isScrolled ? "w-14 gap-0" : "w-14 md:w-auto",
+        // Expanded state on hover (regardless of scroll)
+        "hover:w-auto hover:rounded-lg"
       )}
     >
-      <Plus className="h-6 w-6" />
+      <Plus size={isScrolled ? 28: 24} className="font-bold shrink-0" />
       <span
         className={cn(
-          "ml-2 whitespace-nowrap text-base font-semibold transition-all duration-300",
-          isScrolled ? "opacity-0 w-0 overflow-hidden" : "opacity-100 w-auto"
+          "text-sm font-semibold whitespace-nowrap",
+          "transition-all duration-200",
+          isScrolled ? "max-w-0 opacity-0" : "max-w-[120px] opacity-100",
+          // Always show text on hover
+          "group-hover:max-w-[120px] group-hover:opacity-100"
         )}
       >
         Create Ticket
